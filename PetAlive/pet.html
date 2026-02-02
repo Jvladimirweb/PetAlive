@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <title>PetAlive</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #f4f6f8;
+      padding: 20px;
+    }
+    .card {
+      max-width: 400px;
+      margin: auto;
+      background: #fff;
+      border-radius: 12px;
+      padding: 16px;
+      box-shadow: 0 4px 10px rgba(0,0,0,.1);
+      text-align: center;
+    }
+    img {
+      width: 100%;
+      border-radius: 10px;
+    }
+    .status {
+      margin: 10px 0;
+      font-weight: bold;
+      color: green;
+    }
+    a.button {
+      display: block;
+      margin-top: 15px;
+      padding: 12px;
+      background: #25d366;
+      color: white;
+      text-decoration: none;
+      border-radius: 8px;
+    }
+  </style>
+</head>
+<body>
+
+<div class="card" id="petCard">
+  <p>Carregando dados do pet...</p>
+</div>
+
+<script>
+  const params = new URLSearchParams(window.location.search);
+  const petId = params.get("id");
+
+  const SHEET_ID = "1kK-zkAkyYEyF4DCmd73KU-RWtSZuNiNXD3EI1eFr-7c";
+  const SHEET_NAME = "Página1";
+
+  const url = `https://opensheet.elk.sh/${SHEET_ID}/${SHEET_NAME}`;
+
+  fetch(url)
+    .then(res => res.json())
+    .then(data => {
+      const pet = data.find(p => p.petId === petId);
+
+      if (!pet) {
+        document.getElementById("petCard").innerHTML =
+          "<p>Pet não encontrado 😢</p>";
+        return;
+      }
+
+      document.getElementById("petCard").innerHTML = `
+        <img src="${pet.fotoUrl}">
+        <h2>${pet.petNome}</h2>
+        <p>${pet.tipo} • ${pet.raca}</p>
+        <p><strong>Tutor:</strong> ${pet.tutor}</p>
+        <p class="status">${pet.status || "Ativo"}</p>
+        <a class="button" href="https://wa.me/55${pet.contato}" target="_blank">
+          Falar com o tutor
+        </a>
+      `;
+    });
+</script>
+
+</body>
+</html>
