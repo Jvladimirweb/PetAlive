@@ -77,6 +77,18 @@
       `;
     });
 </script>
+    <img src="${pet.qrUrl}" alt="QR Code do pet" style="margin-top:12px; border-radius:10px;">
+      <a class="button" style="background:#333; margin-top:10px;" href="#" onclick="copiarLink('${pet.petLink}')">
+      Copiar link do pet
+  </a>
+
+  <script>
+    function copiarLink(link){
+      navigator.clipboard.writeText(link);
+      alert("Link copiado!");
+    }
+  </script>
+
 
 </body>
 </html>
