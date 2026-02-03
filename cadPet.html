@@ -11,7 +11,7 @@
     <h1><img src="Imagem/logon.jpg"></h1>
     <p>Cadastre seu pet para proteger e facilitar a identificação.</p>
 
-    <form id="petForm" method="POST" enctype="multipart/form-data" action="SEU_WEBHOOK">
+    <form id="petForm" method="POST" enctype="multipart/form-data" action="http://localhost:5678/webhook/pet-create">
 
       <input type="text" name="petNome" placeholder="Nome do pet" required />
       <input type="text" name="tipo" placeholder="Cachorro, Gato, etc" required />
