@@ -5,6 +5,31 @@
   <title>PetAlive</title>
   <link rel="stylesheet" href="style.css" />
 </head>
+
+  <script>
+  const N8N_WEBHOOK_URL = "https://abf0b5a4773a.ngrok-free.app/webhook/pet-create";
+
+  const form = document.getElementById("petForm");
+  if (!form) alert("ERRO: form com id='petForm' não encontrado");
+
+  form?.addEventListener("submit", async (e) => {
+    e.preventDefault();
+
+    const fd = new FormData(form);
+
+    try {
+      const res = await fetch(N8N_WEBHOOK_URL, { method: "POST", body: fd });
+      const text = await res.text();
+      console.log("Status:", res.status);
+      console.log("Resposta:", text);
+      alert("Enviado! Veja Console (F12). Status: " + res.status);
+    } catch (err) {
+      console.error(err);
+      alert("Falhou: veja o Console (F12). Provável CORS ou ngrok offline.");
+    }
+  });
+</script>
+
 <body>
 
   <div class="container">
