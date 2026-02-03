@@ -7,38 +7,35 @@
 </head>
 
   <script>
-  const N8N_WEBHOOK_URL = "https://174d467e932c.ngrok-free.app/webhook/pet-create";
-
-  const form = document.getElementById("petForm");
-  if (!form) alert("ERRO: form id='petForm' não encontrado");
-
-  form?.addEventListener("submit", async (e) => {
-    e.preventDefault();
-
-    const fd = new FormData(form);
-
-    try {
-      const res = await fetch(N8N_WEBHOOK_URL, {
-        method: "POST",
-        headers: {
-          "ngrok-skip-browser-warning": "true"
-        },
-        body: fd
-      });
-
-      const text = await res.text();
-      console.log("STATUS:", res.status);
-      console.log("RESPOSTA:", text);
-
-      alert("Enviado! Veja o console (F12).");
-
-    } catch (err) {
-      console.error(err);
-      alert("Erro ao enviar. Veja o console.");
-    }
-  });
-</script>
-
+    const N8N_WEBHOOK_URL = "https://174d467e932c.ngrok-free.app/webhook/pet-create";
+  
+    const form = document.getElementById("petForm");
+    if (!form) alert("ERRO: form id='petForm' não encontrado");
+  
+    form?.addEventListener("submit", async (e) => {
+      e.preventDefault();
+  
+      const fd = new FormData(form);
+  
+      try {
+        const res = await fetch(N8N_WEBHOOK_URL, {
+          method: "POST",
+          // ngrok free: pular a tela de aviso
+          headers: { "ngrok-skip-browser-warning": "true" },
+          body: fd,
+        });
+  
+        const text = await res.text();
+        console.log("STATUS:", res.status);
+        console.log("RESPOSTA:", text);
+  
+        alert("Enviado! Veja o Console (F12).");
+      } catch (err) {
+        console.error(err);
+        alert("Falhou. Veja o Console (F12).");
+      }
+    });
+  </script>
 
 <body>
 
