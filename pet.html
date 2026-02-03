@@ -44,7 +44,7 @@
       const novoStatus = (statusAtual === 'Perdido') ? 'Ativo' : 'Perdido';
   
       // ✅ TROQUE pela sua URL pública do webhook (ngrok) + /webhook/pet-status
-      const STATUS_WEBHOOK_URL = "https://SEU_NGROK_AQUI/webhook/pet-status";
+      const STATUS_WEBHOOK_URL = "https://174d467e932c.ngrok-free.app/webhook/pet-status";
   
       try {
         const res = await fetch(STATUS_WEBHOOK_URL, {
