@@ -109,8 +109,23 @@
 
     <div class="card">
       <h3>📱 Meu pet</h3>
-      <p>Acesse o perfil digital do seu pet</p>
-      <a class="button secondary" href="pet.html?id=PET-DEMO">
+      <p>Digite o ID do seu pet para acessar o perfil</p>
+
+      <input
+        type="text"
+        id="petIdInput"
+        placeholder="Ex: PET-100-2026-02-02..."
+        style="
+          width: 100%;
+          padding: 12px;
+          border-radius: 8px;
+          border: 1px solid #ccc;
+          margin-bottom: 10px;
+          font-size: 14px;
+        "
+      />
+
+      <a class="button secondary" href="#" onclick="acessarPet()">
         Acessar meu pet
       </a>
     </div>
