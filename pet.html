@@ -39,6 +39,35 @@
     }
   </style>
 </head>
+  <script>
+    async function toggleStatus(petId, statusAtual) {
+      const novoStatus = (statusAtual === 'Perdido') ? 'Ativo' : 'Perdido';
+  
+      // ✅ TROQUE pela sua URL pública do webhook (ngrok) + /webhook/pet-status
+      const STATUS_WEBHOOK_URL = "https://SEU_NGROK_AQUI/webhook/pet-status";
+  
+      try {
+        const res = await fetch(STATUS_WEBHOOK_URL, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ petId, status: novoStatus })
+        });
+  
+        const data = await res.json().catch(() => ({}));
+  
+        if (!res.ok || data.ok !== true) {
+          alert("Falha ao atualizar status.");
+          return;
+        }
+  
+        alert("Status atualizado para: " + novoStatus);
+        location.reload(); // recarrega pra puxar do Sheet atualizado
+      } catch (e) {
+        alert("Erro de conexão ao atualizar status.");
+      }
+    }
+  </script>
+
 <body>
 
 <div class="card" id="petCard">
@@ -71,6 +100,9 @@
         <p>${pet.tipo} • ${pet.raca}</p>
         <p><strong>Tutor:</strong> ${pet.tutor}</p>
         <p class="status">${pet.status || "Ativo"}</p>
+        <a class="button" style="background:#ff9800;" href="#" onclick="toggleStatus('${pet.petId}', '${pet.status}')">
+          ${pet.status === 'Perdido' ? 'Marcar como Ativo' : 'Marcar como Perdido'}
+        </a>
         <a class="button" href="https://wa.me/55${pet.contato}" target="_blank">
           Falar com o tutor
         </a>
