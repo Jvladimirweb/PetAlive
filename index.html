@@ -83,6 +83,19 @@
     }
   </style>
 </head>
+
+  <script>
+  function acessarPet() {
+    const petId = document.getElementById("petIdInput").value.trim();
+
+    if (!petId) {
+      alert("Digite o ID do seu pet");
+      return;
+    }
+
+    window.location.href = `pet.html?id=${encodeURIComponent(petId)}`;
+  }
+</script>
 <body>
 
   <div class="container">
