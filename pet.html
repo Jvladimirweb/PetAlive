@@ -66,7 +66,7 @@
       }
 
       document.getElementById("petCard").innerHTML = `
-        <img src="${pet.fotoUrl}">
+        <img src="${pet.fotoUrl.replace('uc?export=view&id=', 'thumbnail?id=')}&sz=w800">
         <h2>${pet.petNome}</h2>
         <p>${pet.tipo} • ${pet.raca}</p>
         <p><strong>Tutor:</strong> ${pet.tutor}</p>
