@@ -121,27 +121,37 @@
     </div>
 
     <div class="card">
-      <h3>📱 Meu pet</h3>
-      <p>Digite o ID do seu pet para acessar o perfil</p>
+  <h3>📱 Ver meu pet</h3>
+  <p>Digite o ID do seu PetAlive (ex: PET-146)</p>
 
-      <input
-        type="text"
-        id="petIdInput"
-        placeholder="Ex: PET-100-2026-02-02..."
-        style="
-          width: 100%;
-          padding: 12px;
-          border-radius: 8px;
-          border: 1px solid #ccc;
-          margin-bottom: 10px;
-          font-size: 14px;
-        "
-      />
+  <input
+    id="petIdInput"
+    placeholder="Ex: PET-146"
+    style="width:100%; padding:12px; border:1px solid #d6dbe1; border-radius:10px; margin-top:10px; box-sizing:border-box;"
+  />
 
-      <a class="button secondary" href="#" onclick="acessarPet()">
-        Acessar meu pet
-      </a>
-    </div>
+  <a class="button secondary" href="#" onclick="abrirMeuPet(event)">
+    Acessar meu pet
+  </a>
+
+  <p style="font-size:12px; color:#777; margin-top:10px;">
+    Dica: o ID aparece após o cadastro e no seu QR.
+  </p>
+</div>
+
+<script>
+  function abrirMeuPet(e) {
+    e.preventDefault();
+    const v = document.getElementById("petIdInput").value.trim();
+    if (!v) {
+      alert("Digite o Pet ID (ex: PET-146)");
+      return;
+    }
+    const petId = encodeURIComponent(v);
+    window.location.href = `/pet.html?id=${petId}`;
+  }
+</script>
+
 
     <div class="card">
       <h3>🤝 Sou parceiro</h3>
