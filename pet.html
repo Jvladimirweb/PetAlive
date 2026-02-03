@@ -4,6 +4,7 @@
   <meta charset="UTF-8">
   <title>PetAlive</title>
   <meta name="viewport" content="width=device-width, initial-scale=1">
+
   <style>
     body {
       font-family: Arial, sans-serif;
@@ -11,7 +12,7 @@
       padding: 20px;
     }
     .card {
-      max-width: 400px;
+      max-width: 420px;
       margin: auto;
       background: #fff;
       border-radius: 12px;
@@ -19,7 +20,7 @@
       box-shadow: 0 4px 10px rgba(0,0,0,.1);
       text-align: center;
     }
-    img {
+    img.pet {
       width: 100%;
       border-radius: 10px;
     }
@@ -28,45 +29,73 @@
       font-weight: bold;
       color: green;
     }
+    .status.perdido { color: #d32f2f; }
     a.button {
       display: block;
-      margin-top: 15px;
+      margin-top: 12px;
       padding: 12px;
-      background: #25d366;
       color: white;
       text-decoration: none;
       border-radius: 8px;
+      font-weight: bold;
+    }
+    .btn-whats { background: #25d366; }
+    .btn-status { background: #ff9800; }
+    .btn-copy { background: #333; }
+    .qr {
+      margin-top: 14px;
+      border-radius: 10px;
+      max-width: 260px;
+      width: 100%;
     }
   </style>
-</head>
+
   <script>
+    const STATUS_WEBHOOK_URL = "https://174d467e932c.ngrok-free.app/webhook/pet-status";
+
     async function toggleStatus(petId, statusAtual) {
-      const novoStatus = (statusAtual === 'Perdido') ? 'Ativo' : 'Perdido';
-  
-      // ✅ TROQUE pela sua URL pública do webhook (ngrok) + /webhook/pet-status
-      const STATUS_WEBHOOK_URL = "https://174d467e932c.ngrok-free.app/webhook/pet-status";
-  
+      const status = (statusAtual === 'Perdido') ? 'Ativo' : 'Perdido';
+
       try {
         const res = await fetch(STATUS_WEBHOOK_URL, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ petId, status: novoStatus })
+          body: JSON.stringify({ petId, status })
         });
-  
+
+        // tenta ler json, mas não quebra se vier vazio
         const data = await res.json().catch(() => ({}));
-  
+
         if (!res.ok || data.ok !== true) {
+          console.log("Resposta do webhook:", res.status, data);
           alert("Falha ao atualizar status.");
           return;
         }
-  
-        alert("Status atualizado para: " + novoStatus);
-        location.reload(); // recarrega pra puxar do Sheet atualizado
+
+        alert("Status atualizado para: " + status);
+        location.reload();
       } catch (e) {
+        console.log(e);
         alert("Erro de conexão ao atualizar status.");
       }
     }
+
+    function copiarLink(link){
+      navigator.clipboard.writeText(link);
+      alert("Link copiado!");
+    }
+
+    // helper: garante link de imagem direto
+    function normalizarFotoUrl(fotoUrl) {
+      if (!fotoUrl) return "";
+      if (fotoUrl.includes("thumbnail?id=")) return fotoUrl;
+      if (fotoUrl.includes("uc?export=view&id=")) {
+        return fotoUrl.replace("uc?export=view&id=", "thumbnail?id=") + "&sz=w800";
+      }
+      return fotoUrl;
+    }
   </script>
+</head>
 
 <body>
 
@@ -76,51 +105,63 @@
 
 <script>
   const params = new URLSearchParams(window.location.search);
-  const petId = params.get("id");
+  const petIdParam = (params.get("id") || "").trim();
 
   const SHEET_ID = "1kK-zkAkyYEyF4DCmd73KU-RWtSZuNiNXD3EI1eFr-7c";
   const SHEET_NAME = "Página1";
-
   const url = `https://opensheet.elk.sh/${SHEET_ID}/${SHEET_NAME}`;
 
   fetch(url)
     .then(res => res.json())
     .then(data => {
-      const pet = data.find(p => p.petId === petId);
+      const pet = data.find(p => (p.petId || "").trim() === petIdParam);
 
       if (!pet) {
-        document.getElementById("petCard").innerHTML =
-          "<p>Pet não encontrado 😢</p>";
+        document.getElementById("petCard").innerHTML = "<p>Pet não encontrado 😢</p>";
         return;
       }
 
+      const statusAtual = (pet.status && pet.status.trim()) ? pet.status.trim() : "Ativo";
+      const foto = normalizarFotoUrl(pet.fotoUrl);
+      const petLink = pet.petLink && pet.petLink.includes("id=")
+        ? pet.petLink
+        : `https://petalive.vercel.app/pet.html?id=${encodeURIComponent(pet.petId)}`;
+
+      const qr = pet.qrUrl && pet.qrUrl.startsWith("http")
+        ? pet.qrUrl
+        : `https://quickchart.io/qr?size=500&ecLevel=H&dark=000000&light=ffffff&text=${encodeURIComponent(petLink)}`;
+
+      const statusClass = statusAtual === "Perdido" ? "status perdido" : "status";
+
       document.getElementById("petCard").innerHTML = `
-        <img src="${pet.fotoUrl.replace('uc?export=view&id=', 'thumbnail?id=')}&sz=w800">
-        <h2>${pet.petNome}</h2>
-        <p>${pet.tipo} • ${pet.raca}</p>
-        <p><strong>Tutor:</strong> ${pet.tutor}</p>
-        <p class="status">${pet.status || "Ativo"}</p>
-        <a class="button" style="background:#ff9800;" href="#" onclick="toggleStatus('${pet.petId}', '${pet.status}')">
-          ${pet.status === 'Perdido' ? 'Marcar como Ativo' : 'Marcar como Perdido'}
+        ${foto ? `<img class="pet" src="${foto}" alt="Foto do pet">` : ""}
+        <h2>${pet.petNome || "-"}</h2>
+        <p>${pet.tipo || "-"} • ${pet.raca || "-"}</p>
+        <p><strong>Tutor:</strong> ${pet.tutor || "-"}</p>
+
+        <p class="${statusClass}">${statusAtual}</p>
+
+        <a class="button btn-status" href="#"
+           onclick="toggleStatus('${pet.petId}', '${statusAtual}'); return false;">
+          ${statusAtual === 'Perdido' ? 'Marcar como Ativo' : 'Marcar como Perdido'}
         </a>
-        <a class="button" href="https://wa.me/55${pet.contato}" target="_blank">
+
+        <a class="button btn-whats"
+           href="https://wa.me/55${pet.contato || ''}" target="_blank">
           Falar com o tutor
         </a>
+
+        <img class="qr" src="${qr}" alt="QR Code do pet">
+        <a class="button btn-copy" href="#"
+           onclick="copiarLink('${petLink}'); return false;">
+          Copiar link do pet
+        </a>
       `;
+    })
+    .catch(() => {
+      document.getElementById("petCard").innerHTML = "<p>Erro ao carregar dados 😢</p>";
     });
 </script>
-    <img src="${pet.qrUrl}" alt="QR Code do pet" style="margin-top:12px; border-radius:10px;">
-      <a class="button" style="background:#333; margin-top:10px;" href="#" onclick="copiarLink('${pet.petLink}')">
-      Copiar link do pet
-  </a>
-
-  <script>
-    function copiarLink(link){
-      navigator.clipboard.writeText(link);
-      alert("Link copiado!");
-    }
-  </script>
-
 
 </body>
 </html>
