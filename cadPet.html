@@ -103,7 +103,7 @@
 
     <form id="petForm">
       <label for="petNome">Nome do pet</label>
-      <input id="petNome" name="petNome" placeholder="Ex: Morgan" required />
+      <input id="petNome" name="petNome" placeholder="Ex: Caramelo" required />
 
       <div class="row">
         <div>
@@ -123,7 +123,7 @@
       <input
         id="contato"
         name="contato"
-        placeholder="Ex: 21969876936"
+        placeholder="Ex: 21999999999"
         inputmode="numeric"
         pattern="[0-9]{10,13}"
         required
@@ -184,7 +184,7 @@
       e.preventDefault();
       clearUI();
 
-      if (!N8N_WEBHOOK_URL.includes("ngrok-free.app/webhook/pet-create")) {
+      if (!N8N_WEBHOOK_URL.includes("https://97d6-2804-14d-5c77-8c5b-9d08-cb84-4242-c49e.ngrok-free.app/webhook/pet-create")) {
         showError("Você precisa configurar a variável N8N_WEBHOOK_URL com a URL atual do ngrok + /webhook/pet-create");
         return;
       }
@@ -226,7 +226,7 @@
         resultStatus.textContent = data.ok ? "OK" : "Sem ok";
         resultPetId.textContent = data.petId || "(sem petId)";
         resultPetLink.href = data.petLink || "#";
-        resultPetLink.textContent = data.petLink || "(sem petLink)";
+        resultPetLink.textContent = (data.petLink || "(sem petLink)");
 
         if (data.qrUrl) {
           resultQr.src = data.qrUrl;
