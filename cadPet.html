@@ -19,17 +19,17 @@
 
     button { width:100%; margin-top:16px; padding:13px; background:#2fbf5b; color:#fff; border:0; border-radius:10px; font-weight:bold; cursor:pointer; }
     button:disabled { opacity:.6; cursor:not-allowed; }
+
     .hint { font-size:12px; color:#777; margin-top:8px; line-height:1.4; }
 
     .error { margin-top:14px; padding:12px; border-radius:12px; background:#fff2f2; border:1px solid #ffd0d0; color:#a40000; display:none; font-size:13px; white-space:pre-wrap; }
     .result { margin-top:18px; background:#f9fafb; border:1px solid #eef1f4; border-radius:12px; padding:14px; display:none; }
-    .result a { word-break:break-all; color:#1565c0; text-decoration:none; }
-    .result img { max-width:240px; width:100%; height:auto; border-radius:12px; border:1px solid #e8edf2; margin-top:10px; display:none; }
-    .actions { display:flex; gap:10px; margin-top:10px; }
-    .btn2 { flex:1; padding:10px; border-radius:10px; border:0; cursor:pointer; font-weight:bold; }
+    .ok { color:#1b5e20; font-weight:bold; }
+    .petid { font-size:18px; font-weight:bold; letter-spacing:.5px; }
+    .actions { display:flex; gap:10px; margin-top:12px; }
+    .btn2 { flex:1; padding:11px; border-radius:10px; border:0; cursor:pointer; font-weight:bold; }
     .btnCopy { background:#333; color:#fff; }
     .btnHome { background:#1976d2; color:#fff; }
-    .small { font-size:12px; color:#666; margin-top:8px; }
   </style>
 </head>
 
@@ -41,7 +41,7 @@
     </div>
 
     <form id="petForm">
-      <label for="petNome">Nome do pet</label>
+      <label for="petNome">Nome do seu pet</label>
       <input id="petNome" name="petNome" placeholder="Ex: Caramelo" required />
 
       <div class="row">
@@ -66,71 +66,98 @@
       <input id="foto" name="foto" type="file" accept="image/*" required />
 
       <button id="btnSubmit" type="submit">Cadastrar Pet</button>
-      <div class="hint">Ao cadastrar, você receberá o link do perfil do pet e o QR Code.</div>
+      <div class="hint">Após cadastrar, você receberá o <b>Pet ID</b> no WhatsApp.</div>
     </form>
 
     <div class="error" id="errorBox"></div>
 
     <div class="result" id="resultBox">
-      <div><b>Status:</b> <span id="resultStatus"></span></div>
-      <div style="margin-top:6px;"><b>Pet ID:</b> <span id="resultPetId"></span></div>
-      <div style="margin-top:6px;"><b>Link do pet:</b> <a id="resultPetLink" href="#" target="_blank" rel="noopener"></a></div>
-
-      <div class="actions">
-        <button class="btn2 btnCopy" id="btnCopy" type="button">Copiar link</button>
-        <button class="btn2 btnHome" id="btnHome" type="button">Voltar pra Home</button>
+      <div class="ok">✅ Pet cadastrado com sucesso!</div>
+      <div style="margin-top:10px;">Seu <b>Pet ID</b>:</div>
+      <div class="petid" id="resultPetId">-</div>
+      <div class="hint" style="margin-top:10px;">
+        Enviamos esse código também no WhatsApp do tutor. Use em “Acessar meu pet” na Home.
       </div>
 
-      <img id="resultQr" alt="QR Code do pet" />
-      <img id="resultFoto" alt="Foto do pet" />
-      <div class="small" id="resultHint"></div>
+      <div class="actions">
+        <button class="btn2 btnCopy" id="btnCopy" type="button">Copiar Pet ID</button>
+        <button class="btn2 btnHome" id="btnHome" type="button">Voltar pra Home</button>
+      </div>
     </div>
   </div>
 
   <script>
-    const N8N_WEBHOOK_URL = "https://97d6-2804-14d-5c77-8c5b-9d08-cb84-4242-c49e.ngrok-free.app/webhook/pet-create";
+    const N8N_WEBHOOK_URL = "COLE_AQUI_SUA_URL_NGROK/webhook/pet-create";
 
     const form = document.getElementById("petForm");
     const btn = document.getElementById("btnSubmit");
     const errorBox = document.getElementById("errorBox");
     const resultBox = document.getElementById("resultBox");
-
-    const resultStatus = document.getElementById("resultStatus");
     const resultPetId = document.getElementById("resultPetId");
-    const resultPetLink = document.getElementById("resultPetLink");
-    const resultQr = document.getElementById("resultQr");
-    const resultFoto = document.getElementById("resultFoto");
-    const resultHint = document.getElementById("resultHint");
 
     const btnCopy = document.getElementById("btnCopy");
     const btnHome = document.getElementById("btnHome");
 
-    const HOME_URL = "https://petalive.vercel.app";
-
-    function showError(msg) { errorBox.style.display = "block"; errorBox.textContent = msg; }
+    function showError(msg) {
+      errorBox.style.display = "block";
+      errorBox.textContent = msg;
+    }
     function clearUI() {
-      errorBox.style.display = "none"; errorBox.textContent = "";
+      errorBox.style.display = "none";
+      errorBox.textContent = "";
       resultBox.style.display = "none";
-      resultQr.style.display = "none";
-      resultFoto.style.display = "none";
-      resultHint.textContent = "";
+      resultPetId.textContent = "-";
     }
 
-    btnHome.addEventListener("click", () => window.location.href = HOME_URL);
+    btnHome.addEventListener("click", () => window.location.href = "/");
 
     btnCopy.addEventListener("click", async () => {
-      const link = resultPetLink.href || "";
-      if (!link || link === "#") return alert("Sem link para copiar.");
-      try { await navigator.clipboard.writeText(link); alert("Link copiado!"); }
-      catch { prompt("Copie o link:", link); }
+      const id = (resultPetId.textContent || "").trim();
+      if (!id || id === "-") return alert("Sem Pet ID.");
+      try { await navigator.clipboard.writeText(id); alert("Pet ID copiado!"); }
+      catch { prompt("Copie o Pet ID:", id); }
     });
 
-    function normalizarFotoUrl(fotoUrl) {
-      if (!fotoUrl) return "";
-      if (fotoUrl.includes("thumbnail?id=")) return fotoUrl;
-      if (fotoUrl.includes("uc?export=view&id=")) return fotoUrl.replace("uc?export=view&id=", "thumbnail?id=") + "&sz=w800";
-      return fotoUrl;
-    }
+    form.addEventListener("submit", async (e) => {
+      e.preventDefault();
+      clearUI();
+
+      if (!N8N_WEBHOOK_URL.includes("/webhook/pet-create")) {
+        showError("Configure N8N_WEBHOOK_URL com sua URL pública + /webhook/pet-create");
+        return;
+      }
+
+      btn.disabled = true;
+      btn.textContent = "Enviando...";
+
+      try {
+        const fd = new FormData(form);
+
+        const res = await fetch(N8N_WEBHOOK_URL, {
+          method: "POST",
+          headers: { "ngrok-skip-browser-warning": "true" },
+          body: fd,
+        });
+
+        const raw = await res.text();
+        let data = null;
+        try { data = JSON.parse(raw); } catch {}
+
+        if (!res.ok || !data || data.ok !== true) {
+          showError("Não foi possível cadastrar. Tente novamente.\n\n" + (raw || ""));
+          return;
+        }
+
+        resultPetId.textContent = data.petId || "-";
+        resultBox.style.display = "block";
+
+      } catch (err) {
+        showError("Erro de conexão. Tente novamente.\n\n" + (err?.message || err));
+      } finally {
+        btn.disabled = false;
+        btn.textContent = "Cadastrar Pet";
+      }
+    });
   </script>
 </body>
 </html>
