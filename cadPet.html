@@ -173,7 +173,9 @@
 
         // Esperado: { ok, petId, petLink, qrUrl, fotoUrl, status }
         const petId = data.petId || data.petID || data.petid || "";
-        const petLink = data.petLink || data.link || "";
+        const petLink = pet.petLink && pet.petLink.includes("id=")
+        ? pet.petLink
+        : `https://petalive.vercel.app/pet.html?id=${encodeURIComponent(pet.petId)}`;
         const qrUrl = data.qrUrl || data.qrURL || "";
         const fotoUrl = data.fotoUrl || data.fotoURL || data.photoUrl || "";
         const status = data.status || (data.ok ? "OK" : "Sem OK");
