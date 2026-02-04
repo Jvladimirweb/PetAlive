@@ -1,182 +1,173 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-  <meta charset="UTF-8" />
-  <title>PetAlive • Cadastro</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta charset="UTF-8">
+  <title>PetAlive</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
   <style>
-    body { font-family: Arial, sans-serif; background:#f4f6f8; margin:0; padding:20px; }
-    .container { max-width:520px; margin:auto; background:#fff; border-radius:14px; padding:20px; box-shadow:0 4px 12px rgba(0,0,0,.08); }
-    .logo { text-align:center; margin-bottom:10px; }
-    .logo img { max-width:260px; width:100%; height:auto; }
-    h2 { margin:10px 0 0; text-align:center; }
-    p.sub { color:#666; text-align:center; margin:8px 0 18px; }
-    label { display:block; font-size:13px; margin-top:12px; color:#333; }
-    input { width:100%; padding:12px; border:1px solid #d6dbe1; border-radius:10px; margin-top:6px; box-sizing:border-box; background:#f8fbff; outline:none; }
-    input[type="file"] { background:#fff; padding:10px; }
-    .row { display:flex; gap:10px; }
-    .row > div { flex:1; }
-    button { width:100%; margin-top:16px; padding:13px; background:#2fbf5b; color:#fff; border:0; border-radius:10px; font-weight:bold; cursor:pointer; }
-    button:disabled { opacity:.6; cursor:not-allowed; }
-    .hint { font-size:12px; color:#777; margin-top:8px; line-height:1.4; }
-    .result { margin-top:18px; background:#f9fafb; border:1px solid #eef1f4; border-radius:12px; padding:14px; display:none; }
-    .result a { word-break:break-all; }
-    .result img { max-width:240px; width:100%; height:auto; border-radius:12px; border:1px solid #e8edf2; margin-top:10px; }
-    .actions { display:flex; gap:10px; margin-top:10px; }
-    .actions button { margin-top:0; background:#333; }
-    .actions a { display:block; flex:1; text-align:center; padding:13px; background:#2196F3; color:#fff; border-radius:10px; text-decoration:none; font-weight:bold; }
-    .error { margin-top:14px; padding:12px; border-radius:12px; background:#fff2f2; border:1px solid #ffd0d0; color:#a40000; display:none; font-size:13px; white-space:pre-wrap; }
-    .ok { color:#2e7d32; font-weight:bold; }
+    body {
+      font-family: Arial, sans-serif;
+      background: #f4f6f8;
+      padding: 20px;
+    }
+    .card {
+      max-width: 420px;
+      margin: auto;
+      background: #fff;
+      border-radius: 12px;
+      padding: 16px;
+      box-shadow: 0 4px 10px rgba(0,0,0,.1);
+      text-align: center;
+    }
+    img.pet {
+      width: 100%;
+      border-radius: 10px;
+    }
+    .status {
+      margin: 10px 0;
+      font-weight: bold;
+      color: green;
+    }
+    .status.perdido { color: #d32f2f; }
+    a.button {
+      display: block;
+      margin-top: 12px;
+      padding: 12px;
+      color: white;
+      text-decoration: none;
+      border-radius: 8px;
+      font-weight: bold;
+    }
+    .btn-whats { background: #25d366; }
+    .btn-status { background: #ff9800; }
+    .btn-copy { background: #333; }
+    .qr {
+      margin-top: 14px;
+      border-radius: 10px;
+      max-width: 260px;
+      width: 100%;
+    }
   </style>
+
+  <script>
+    const STATUS_WEBHOOK_URL = "https://97d6-2804-14d-5c77-8c5b-9d08-cb84-4242-c49e.ngrok-free.app/webhook/pet-status";
+
+    async function toggleStatus(petId, statusAtual) {
+      const status = (statusAtual === 'Perdido') ? 'Ativo' : 'Perdido';
+
+      try {
+        const res = await fetch(STATUS_WEBHOOK_URL, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ petId, status })
+        });
+
+        // tenta ler json, mas não quebra se vier vazio
+        const data = await res.json().catch(() => ({}));
+
+        if (!res.ok || data.ok !== true) {
+          console.log("Resposta do webhook:", res.status, data);
+          alert("Falha ao atualizar status.");
+          return;
+        }
+
+        alert("Status atualizado para: " + status);
+        location.reload();
+      } catch (e) {
+        console.log(e);
+        alert("Erro de conexão ao atualizar status.");
+      }
+    }
+
+    function copiarLink(link){
+      navigator.clipboard.writeText(link);
+      alert("Link copiado!");
+    }
+
+    // helper: garante link de imagem direto
+    function normalizarFotoUrl(fotoUrl) {
+      if (!fotoUrl) return "";
+      if (fotoUrl.includes("thumbnail?id=")) return fotoUrl;
+      if (fotoUrl.includes("uc?export=view&id=")) {
+        return fotoUrl.replace("uc?export=view&id=", "thumbnail?id=") + "&sz=w800";
+      }
+      return fotoUrl;
+    }
+  </script>
 </head>
 
 <body>
-  <div class="container">
-    <div class="logo">
-      <img src="/Imagem/logon.jpg" alt="PetAlive" />
-      <p class="sub">Cadastre seu pet para proteger e facilitar a identificação.</p>
-    </div>
 
-    <form id="petForm">
-      <label for="petNome">Nome do pet</label>
-      <input id="petNome" name="petNome" placeholder="Ex: Caramelo" required />
+<div class="card" id="petCard">
+  <p>Carregando dados do pet...</p>
+</div>
 
-      <div class="row">
-        <div>
-          <label for="tipo">Tipo</label>
-          <input id="tipo" name="tipo" placeholder="Cachorro, gato, etc" required />
-        </div>
-        <div>
-          <label for="raca">Raça</label>
-          <input id="raca" name="raca" placeholder="Ex: Dog francês" required />
-        </div>
-      </div>
+<script>
+  const params = new URLSearchParams(window.location.search);
+  const petIdParam = (params.get("id") || "").trim();
 
-      <label for="tutor">Nome do tutor</label>
-      <input id="tutor" name="tutor" placeholder="Ex: Vlad" required />
+  const SHEET_ID = "1kK-zkAkyYEyF4DCmd73KU-RWtSZuNiNXD3EI1eFr-7c";
+  const SHEET_NAME = "Página1";
+  const url = `https://opensheet.elk.sh/${SHEET_ID}/${SHEET_NAME}`;
 
-      <label for="contato">WhatsApp do tutor (apenas números)</label>
-      <input id="contato" name="contato" placeholder="21999999999" inputmode="numeric" pattern="[0-9]{10,13}" required />
-      <div class="hint">Dica: Use DDD + número. Ex: <b>21999999999</b>. Sem +55, sem espaços.</div>
+  fetch(url)
+    .then(res => res.json())
+    .then(data => {
+      const pet = data.find(p => (p.petId || "").trim() === petIdParam);
 
-      <label for="foto">Foto do pet</label>
-      <input id="foto" name="foto" type="file" accept="image/*" required />
-
-      <button id="btnSubmit" type="submit">Cadastrar Pet</button>
-      <div class="hint">Ao cadastrar, você receberá o link do perfil do pet e o QR Code.</div>
-    </form>
-
-    <div class="error" id="errorBox"></div>
-
-    <div class="result" id="resultBox">
-      <div><b>Status:</b> <span id="resultStatus" class="ok"></span></div>
-      <div style="margin-top:6px;"><b>Pet ID:</b> <span id="resultPetId"></span></div>
-      <div style="margin-top:6px;"><b>Link do pet:</b> <a id="resultPetLink" href="#" target="_blank" rel="noopener"></a></div>
-
-      <img id="resultQr" alt="QR Code do pet" />
-      <img id="resultFoto" alt="Foto do pet" />
-
-      <div class="actions">
-        <button type="button" id="btnCopy">Copiar link</button>
-        <a href="/" title="Voltar para a Home">Home</a>
-      </div>
-    </div>
-  </div>
-
-  <script>
-    // Troque pela sua URL do ngrok atual:
-    const N8N_WEBHOOK_URL = "https://97d6-2804-14d-5c77-8c5b-9d08-cb84-4242-c49e.ngrok-free.app/webhook/pet-create";
-
-    const form = document.getElementById("petForm");
-    const btn = document.getElementById("btnSubmit");
-    const errorBox = document.getElementById("errorBox");
-    const resultBox = document.getElementById("resultBox");
-
-    const resultStatus = document.getElementById("resultStatus");
-    const resultPetId = document.getElementById("resultPetId");
-    const resultPetLink = document.getElementById("resultPetLink");
-    const resultQr = document.getElementById("resultQr");
-    const resultFoto = document.getElementById("resultFoto");
-    const btnCopy = document.getElementById("btnCopy");
-
-    let lastLink = "";
-
-    function showError(msg) {
-      errorBox.style.display = "block";
-      errorBox.textContent = msg;
-    }
-    function clearUI() {
-      errorBox.style.display = "none";
-      errorBox.textContent = "";
-      resultBox.style.display = "none";
-      lastLink = "";
-    }
-
-    btnCopy.addEventListener("click", async () => {
-      if (!lastLink) return;
-      try {
-        await navigator.clipboard.writeText(lastLink);
-        alert("Link copiado!");
-      } catch {
-        alert("Não consegui copiar automaticamente. Copie manualmente:\n\n" + lastLink);
+      if (!pet) {
+        document.getElementById("petCard").innerHTML = "<p>Pet não encontrado 😢</p>";
+        return;
       }
+
+      const statusAtual = (pet.status && pet.status.trim()) ? pet.status.trim() : "Ativo";
+      const foto = normalizarFotoUrl(pet.fotoUrl);
+      const petLink = pet.petLink && pet.petLink.includes("id=")
+        ? pet.petLink
+        : `https://petalive.vercel.app/pet.html?id=${encodeURIComponent(pet.petId)}`;
+
+      const qr = pet.qrUrl && pet.qrUrl.startsWith("http")
+        ? pet.qrUrl
+        : `https://quickchart.io/qr?size=500&ecLevel=H&dark=000000&light=ffffff&text=${encodeURIComponent(petLink)}`;
+
+      const statusClass = statusAtual === "Perdido" ? "status perdido" : "status";
+
+      document.getElementById("petCard").innerHTML = `
+        ${foto ? `<img class="pet" src="${foto}" alt="Foto do pet">` : ""}
+        <h2>${pet.petNome || "-"}</h2>
+        <p>${pet.tipo || "-"} • ${pet.raca || "-"}</p>
+        <p><strong>Tutor:</strong> ${pet.tutor || "-"}</p>
+
+        <p class="${statusClass}">${statusAtual}</p>
+
+        <a class="button btn-status" href="#"
+           onclick="toggleStatus('${pet.petId}', '${statusAtual}'); return false;">
+          ${statusAtual === 'Perdido' ? 'Marcar como Ativo' : 'Marcar como Perdido'}
+        </a>
+
+        <a class="button btn-whats"
+           href="https://wa.me/55${pet.contato || ''}" target="_blank">
+          Falar com o tutor
+        </a>
+
+        <a class="button" 
+           style="background:#555; margin-top:10px;" 
+           href="https://petalive.vercel.app">
+           Voltar para a Home
+        </a>
+
+        <img class="qr" src="${qr}" alt="QR Code do pet">
+        <a class="button btn-copy" href="#"
+           onclick="copiarLink('${petLink}'); return false;">
+          Copiar link do pet
+        </a>
+      `;
+    })
+    .catch(() => {
+      document.getElementById("petCard").innerHTML = "<p>Erro ao carregar dados 😢</p>";
     });
+</script>
 
-    form.addEventListener("submit", async (e) => {
-      e.preventDefault();
-      clearUI();
-
-      btn.disabled = true;
-      btn.textContent = "Enviando...";
-
-      try {
-        const fd = new FormData(form);
-
-        const res = await fetch(N8N_WEBHOOK_URL, {
-          method: "POST",
-          headers: { "ngrok-skip-browser-warning": "true" },
-          body: fd,
-        });
-
-        const raw = await res.text();
-
-        if (!res.ok) {
-          showError("Falha no envio (HTTP " + res.status + ")\n\n" + raw);
-          return;
-        }
-
-        let data;
-        try { data = JSON.parse(raw); } catch {
-          showError("O n8n respondeu, mas não retornou JSON.\n\nResposta:\n" + raw);
-          return;
-        }
-
-        if (!data?.ok) {
-          showError("Resposta inesperada do n8n:\n\n" + JSON.stringify(data, null, 2));
-          return;
-        }
-
-        resultStatus.textContent = data.status || "OK";
-        resultPetId.textContent = data.petId || "(sem petId)";
-
-        lastLink = data.petLink || "";
-        resultPetLink.href = lastLink || "#";
-        resultPetLink.textContent = lastLink || "(sem petLink)";
-
-        resultQr.style.display = data.qrUrl ? "block" : "none";
-        resultQr.src = data.qrUrl || "";
-
-        resultFoto.style.display = data.fotoUrl ? "block" : "none";
-        resultFoto.src = data.fotoUrl || "";
-
-        resultBox.style.display = "block";
-      } catch (err) {
-        showError("Erro ao enviar.\n\n" + (err?.message || err));
-      } finally {
-        btn.disabled = false;
-        btn.textContent = "Cadastrar Pet";
-      }
-    });
-  </script>
 </body>
 </html>
