@@ -131,66 +131,6 @@
       if (fotoUrl.includes("uc?export=view&id=")) return fotoUrl.replace("uc?export=view&id=", "thumbnail?id=") + "&sz=w800";
       return fotoUrl;
     }
-
-    form.addEventListener("submit", async (e) => {
-      e.preventDefault();
-      clearUI();
-
-      btn.disabled = true;
-      btn.textContent = "Enviando...";
-
-      try {
-        const fd = new FormData(form);
-
-        const res = await fetch(N8N_WEBHOOK_URL, {
-          method: "POST",
-          headers: { "ngrok-skip-browser-warning": "true" },
-          body: fd,
-        });
-
-        const raw = await res.text();
-
-        if (!res.ok) {
-          showError("Falha no envio (HTTP " + res.status + ")\n\n" + raw);
-          return;
-        }
-
-        let data;
-        try { data = JSON.parse(raw); }
-        catch { showError("n8n respondeu, mas não retornou JSON.\n\n" + raw); return; }
-
-        const petId = (data.petId || "").trim();
-        const status = (data.status || (data.ok ? "OK" : "Erro")).trim();
-
-        // fallback igual ao pet.html
-        const petLink = (data.petLink && data.petLink.includes("id=") && data.petLink.trim().length > 10)
-          ? data.petLink.trim()
-          : `${HOME_URL}/pet.html?id=${encodeURIComponent(petId)}`;
-
-        const qrUrl = (data.qrUrl && data.qrUrl.startsWith("http"))
-          ? data.qrUrl
-          : `https://quickchart.io/qr?size=500&ecLevel=H&dark=000000&light=ffffff&text=${encodeURIComponent(petLink)}`;
-
-        const fotoUrl = normalizarFotoUrl(data.fotoUrl || "");
-
-        resultStatus.textContent = status;
-        resultPetId.textContent = petId || "(sem petId)";
-        resultPetLink.href = petLink || "#";
-        resultPetLink.textContent = petLink || "(sem petLink)";
-
-        if (qrUrl) { resultQr.src = qrUrl; resultQr.style.display = "block"; }
-        if (fotoUrl) { resultFoto.src = fotoUrl; resultFoto.style.display = "block"; }
-
-        if (!petId) resultHint.textContent = "Seu n8n não retornou petId. Ajuste o Respond to Webhook.";
-        resultBox.style.display = "block";
-      } catch (err) {
-        console.error(err);
-        showError("Erro ao enviar.\n\n" + (err?.message || err));
-      } finally {
-        btn.disabled = false;
-        btn.textContent = "Cadastrar Pet";
-      }
-    });
   </script>
 </body>
 </html>
