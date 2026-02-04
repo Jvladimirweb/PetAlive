@@ -10,17 +10,20 @@
     .logo { text-align:center; margin-bottom:10px; }
     .logo img { max-width:260px; width:100%; height:auto; }
     p.sub { color:#666; text-align:center; margin:8px 0 18px; }
+
     label { display:block; font-size:13px; margin-top:12px; color:#333; }
     input { width:100%; padding:12px; border:1px solid #d6dbe1; border-radius:10px; margin-top:6px; box-sizing:border-box; background:#f8fbff; outline:none; }
     input[type="file"] { background:#fff; padding:10px; }
     .row { display:flex; gap:10px; }
     .row > div { flex:1; }
+
     button { width:100%; margin-top:16px; padding:13px; background:#2fbf5b; color:#fff; border:0; border-radius:10px; font-weight:bold; cursor:pointer; }
     button:disabled { opacity:.6; cursor:not-allowed; }
     .hint { font-size:12px; color:#777; margin-top:8px; line-height:1.4; }
+
     .error { margin-top:14px; padding:12px; border-radius:12px; background:#fff2f2; border:1px solid #ffd0d0; color:#a40000; display:none; font-size:13px; white-space:pre-wrap; }
     .result { margin-top:18px; background:#f9fafb; border:1px solid #eef1f4; border-radius:12px; padding:14px; display:none; }
-    .result a { word-break:break-all; }
+    .result a { word-break:break-all; color:#1565c0; text-decoration:none; }
     .result img { max-width:240px; width:100%; height:auto; border-radius:12px; border:1px solid #e8edf2; margin-top:10px; display:none; }
     .actions { display:flex; gap:10px; margin-top:10px; }
     .btn2 { flex:1; padding:10px; border-radius:10px; border:0; cursor:pointer; font-weight:bold; }
@@ -86,8 +89,8 @@
   </div>
 
   <script>
-    // ✅ COLE AQUI sua URL pública (ngrok) do webhook de criação:
-    // exemplo: https://xxxx.ngrok-free.app/webhook/pet-create
+    // ✅ COLE AQUI sua URL do ngrok (a MESMA que você está usando no create)
+    // exemplo: https://174d467e932c.ngrok-free.app/webhook/pet-create
     const N8N_WEBHOOK_URL = "https://97d6-2804-14d-5c77-8c5b-9d08-cb84-4242-c49e.ngrok-free.app/webhook/pet-create";
 
     const form = document.getElementById("petForm");
@@ -118,20 +121,13 @@
       resultHint.textContent = "";
     }
 
-    btnHome.addEventListener("click", () => {
-      window.location.href = "/"; // home do Vercel
-    });
+    btnHome.addEventListener("click", () => window.location.href = "/");
 
     btnCopy.addEventListener("click", async () => {
       const link = resultPetLink.href || "";
       if (!link || link === "#") return alert("Sem link para copiar.");
-      try {
-        await navigator.clipboard.writeText(link);
-        alert("Link copiado!");
-      } catch {
-        // fallback simples
-        prompt("Copie o link:", link);
-      }
+      try { await navigator.clipboard.writeText(link); alert("Link copiado!"); }
+      catch { prompt("Copie o link:", link); }
     });
 
     form.addEventListener("submit", async (e) => {
@@ -139,7 +135,7 @@
       clearUI();
 
       if (!N8N_WEBHOOK_URL || N8N_WEBHOOK_URL.includes("COLE_AQUI")) {
-        showError("Configure a variável N8N_WEBHOOK_URL com sua URL do ngrok + /webhook/pet-create");
+        showError("Configure a variável N8N_WEBHOOK_URL (ngrok) + /webhook/pet-create");
         return;
       }
 
@@ -151,10 +147,7 @@
 
         const res = await fetch(N8N_WEBHOOK_URL, {
           method: "POST",
-          headers: {
-            // ngrok grátis
-            "ngrok-skip-browser-warning": "true",
-          },
+          headers: { "ngrok-skip-browser-warning": "true" },
           body: fd,
         });
 
@@ -166,37 +159,30 @@
         }
 
         let data;
-        try { data = JSON.parse(raw); } catch {
+        try { data = JSON.parse(raw); }
+        catch {
           showError("O n8n respondeu, mas não retornou JSON.\n\nResposta:\n" + raw);
           return;
         }
 
-        // Esperado: { ok, petId, petLink, qrUrl, fotoUrl, status }
-        const petId = data.petId || data.petID || data.petid || "";
-        const petLink = pet.petLink && pet.petLink.includes("id=")
-        ? pet.petLink
-        : `https://petalive.vercel.app/pet.html?id=${encodeURIComponent(pet.petId)}`;
-        const qrUrl = data.qrUrl || data.qrURL || "";
-        const fotoUrl = data.fotoUrl || data.fotoURL || data.photoUrl || "";
-        const status = data.status || (data.ok ? "OK" : "Sem OK");
+        // ⚠️ Seu Respond to Webhook precisa devolver exatamente esses campos:
+        // { ok:true, petId, petLink, qrUrl, fotoUrl, status }
+        const petId = data.petId || "";
+        const petLink = data.petLink || "";
+        const qrUrl = data.qrUrl || "";
+        const fotoUrl = data.fotoUrl || "";
+        const status = data.status || (data.ok ? "OK" : "Erro");
 
         resultStatus.textContent = status;
         resultPetId.textContent = petId || "(sem petId)";
         resultPetLink.href = petLink || "#";
         resultPetLink.textContent = petLink || "(sem petLink)";
 
-        if (qrUrl) {
-          resultQr.src = qrUrl;
-          resultQr.style.display = "block";
-        }
-        if (fotoUrl) {
-          resultFoto.src = fotoUrl;
-          resultFoto.style.display = "block";
-        }
+        if (qrUrl) { resultQr.src = qrUrl; resultQr.style.display = "block"; }
+        if (fotoUrl) { resultFoto.src = fotoUrl; resultFoto.style.display = "block"; }
 
-        if (!qrUrl || !fotoUrl) {
-          resultHint.textContent = "Se QR/FOTO não aparecerem, confira se o Respond to Webhook está retornando qrUrl e fotoUrl.";
-        }
+        if (!petLink) resultHint.textContent = "Seu n8n está respondendo petLink vazio. Ajuste o Edit Fields para montar o link com o petId.";
+        else if (!qrUrl || !fotoUrl) resultHint.textContent = "QR/FOTO não vieram no JSON. Confere o Respond to Webhook (campos qrUrl e fotoUrl).";
 
         resultBox.style.display = "block";
       } catch (err) {
