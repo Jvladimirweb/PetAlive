@@ -83,14 +83,11 @@
 
       <img id="resultQr" alt="QR Code do pet" />
       <img id="resultFoto" alt="Foto do pet" />
-
       <div class="small" id="resultHint"></div>
     </div>
   </div>
 
   <script>
-    // ✅ COLE AQUI sua URL do ngrok (a MESMA que você está usando no create)
-    // exemplo: https://174d467e932c.ngrok-free.app/webhook/pet-create
     const N8N_WEBHOOK_URL = "https://97d6-2804-14d-5c77-8c5b-9d08-cb84-4242-c49e.ngrok-free.app/webhook/pet-create";
 
     const form = document.getElementById("petForm");
@@ -108,20 +105,18 @@
     const btnCopy = document.getElementById("btnCopy");
     const btnHome = document.getElementById("btnHome");
 
-    function showError(msg) {
-      errorBox.style.display = "block";
-      errorBox.textContent = msg;
-    }
+    const HOME_URL = "https://petalive.vercel.app";
+
+    function showError(msg) { errorBox.style.display = "block"; errorBox.textContent = msg; }
     function clearUI() {
-      errorBox.style.display = "none";
-      errorBox.textContent = "";
+      errorBox.style.display = "none"; errorBox.textContent = "";
       resultBox.style.display = "none";
       resultQr.style.display = "none";
       resultFoto.style.display = "none";
       resultHint.textContent = "";
     }
 
-    btnHome.addEventListener("click", () => window.location.href = "/");
+    btnHome.addEventListener("click", () => window.location.href = HOME_URL);
 
     btnCopy.addEventListener("click", async () => {
       const link = resultPetLink.href || "";
@@ -130,14 +125,16 @@
       catch { prompt("Copie o link:", link); }
     });
 
+    function normalizarFotoUrl(fotoUrl) {
+      if (!fotoUrl) return "";
+      if (fotoUrl.includes("thumbnail?id=")) return fotoUrl;
+      if (fotoUrl.includes("uc?export=view&id=")) return fotoUrl.replace("uc?export=view&id=", "thumbnail?id=") + "&sz=w800";
+      return fotoUrl;
+    }
+
     form.addEventListener("submit", async (e) => {
       e.preventDefault();
       clearUI();
-
-      if (!N8N_WEBHOOK_URL || N8N_WEBHOOK_URL.includes("COLE_AQUI")) {
-        showError("Configure a variável N8N_WEBHOOK_URL (ngrok) + /webhook/pet-create");
-        return;
-      }
 
       btn.disabled = true;
       btn.textContent = "Enviando...";
@@ -160,18 +157,21 @@
 
         let data;
         try { data = JSON.parse(raw); }
-        catch {
-          showError("O n8n respondeu, mas não retornou JSON.\n\nResposta:\n" + raw);
-          return;
-        }
+        catch { showError("n8n respondeu, mas não retornou JSON.\n\n" + raw); return; }
 
-        // ⚠️ Seu Respond to Webhook precisa devolver exatamente esses campos:
-        // { ok:true, petId, petLink, qrUrl, fotoUrl, status }
-        const petId = data.petId || "";
-        const petLink = data.petLink || "";
-        const qrUrl = data.qrUrl || "";
-        const fotoUrl = data.fotoUrl || "";
-        const status = data.status || (data.ok ? "OK" : "Erro");
+        const petId = (data.petId || "").trim();
+        const status = (data.status || (data.ok ? "OK" : "Erro")).trim();
+
+        // fallback igual ao pet.html
+        const petLink = (data.petLink && data.petLink.includes("id=") && data.petLink.trim().length > 10)
+          ? data.petLink.trim()
+          : `${HOME_URL}/pet.html?id=${encodeURIComponent(petId)}`;
+
+        const qrUrl = (data.qrUrl && data.qrUrl.startsWith("http"))
+          ? data.qrUrl
+          : `https://quickchart.io/qr?size=500&ecLevel=H&dark=000000&light=ffffff&text=${encodeURIComponent(petLink)}`;
+
+        const fotoUrl = normalizarFotoUrl(data.fotoUrl || "");
 
         resultStatus.textContent = status;
         resultPetId.textContent = petId || "(sem petId)";
@@ -181,13 +181,11 @@
         if (qrUrl) { resultQr.src = qrUrl; resultQr.style.display = "block"; }
         if (fotoUrl) { resultFoto.src = fotoUrl; resultFoto.style.display = "block"; }
 
-        if (!petLink) resultHint.textContent = "Seu n8n está respondendo petLink vazio. Ajuste o Edit Fields para montar o link com o petId.";
-        else if (!qrUrl || !fotoUrl) resultHint.textContent = "QR/FOTO não vieram no JSON. Confere o Respond to Webhook (campos qrUrl e fotoUrl).";
-
+        if (!petId) resultHint.textContent = "Seu n8n não retornou petId. Ajuste o Respond to Webhook.";
         resultBox.style.display = "block";
       } catch (err) {
         console.error(err);
-        showError("Erro ao enviar. Veja o Console (F12).\n\n" + (err?.message || err));
+        showError("Erro ao enviar.\n\n" + (err?.message || err));
       } finally {
         btn.disabled = false;
         btn.textContent = "Cadastrar Pet";
