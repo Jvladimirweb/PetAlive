@@ -1,0 +1,233 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <title>PetAlive • Comunidade</title>
+  <style>
+    body { font-family: Arial, sans-serif; background:#f4f6f8; margin:0; padding:20px; }
+    .wrap { max-width: 980px; margin: 0 auto; }
+    .topbar {
+      background:#fff; border-radius:14px; padding:14px 16px;
+      box-shadow:0 4px 12px rgba(0,0,0,.08);
+      display:flex; gap:10px; flex-wrap:wrap; align-items:center; justify-content:space-between;
+    }
+    .title { font-weight:800; font-size:18px; display:flex; gap:10px; align-items:center; }
+    .title span { font-size:20px; }
+    .controls { display:flex; gap:10px; flex-wrap:wrap; align-items:center; }
+    .btn {
+      border:0; border-radius:10px; padding:10px 12px; font-weight:700; cursor:pointer;
+      background:#e9eef5;
+    }
+    .btn.active { background:#1976d2; color:#fff; }
+    .btn.orange { background:#ff9800; color:#fff; }
+    .btn.green { background:#2fbf5b; color:#fff; }
+    .btn.dark { background:#333; color:#fff; }
+    .search {
+      border:1px solid #d6dbe1; border-radius:10px; padding:10px 12px; outline:none;
+      background:#f8fbff; min-width: 240px;
+    }
+
+    .grid { margin-top:16px; display:grid; gap:14px; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); }
+    .card {
+      background:#fff; border-radius:14px; padding:12px;
+      box-shadow:0 4px 12px rgba(0,0,0,.08);
+      cursor:pointer; transition: transform .05s ease;
+      display:flex; flex-direction:column; gap:10px;
+    }
+    .card:active { transform: scale(.99); }
+    .imgBox {
+      width:100%; aspect-ratio: 1/1; border-radius:12px; overflow:hidden;
+      background:#eef2f6; display:flex; align-items:center; justify-content:center;
+    }
+    .imgBox img { width:100%; height:100%; object-fit:cover; display:block; }
+    .name { font-size:18px; font-weight:800; margin:0; }
+    .meta { margin:0; color:#444; font-size:13px; }
+    .pillRow { display:flex; gap:8px; flex-wrap:wrap; }
+    .pill {
+      font-size:12px; font-weight:800; padding:6px 10px; border-radius:999px;
+      background:#eef2f6; color:#333;
+    }
+    .pill.lost { background:#ffe6e6; color:#b71c1c; }
+    .pill.active { background:#e6f6ea; color:#1b5e20; }
+
+    .state {
+      margin-top:16px; background:#fff; border-radius:14px; padding:14px 16px;
+      box-shadow:0 4px 12px rgba(0,0,0,.08);
+      color:#333;
+    }
+    .small { font-size:12px; color:#666; margin-top:6px; }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="topbar">
+      <div class="title"><span>🐾</span> Comunidade PetAlive</div>
+
+      <div class="controls">
+        <input id="q" class="search" placeholder="Buscar (nome, tipo, raça)..." />
+        <button id="fTodos" class="btn active">Todos</button>
+        <button id="fPerdidos" class="btn orange">Perdidos</button>
+        <button id="fAtivos" class="btn green">Ativos</button>
+        <button id="btnHome" class="btn dark">Voltar pra Home</button>
+      </div>
+    </div>
+
+    <div id="state" class="state">Carregando pets...</div>
+    <div id="grid" class="grid" style="display:none;"></div>
+
+    <div class="small">
+      * Esta página mostra apenas informações básicas da comunidade. Contato do tutor e QR Code não aparecem aqui.
+    </div>
+  </div>
+
+<script>
+  // === CONFIG ===
+  const SHEET_ID = "1kK-zkAkyYEyF4DCmd73KU-RWtSZuNiNXD3EI1eFr-7c";
+  const SHEET_NAME = "Página1";
+  const DATA_URL = `https://opensheet.elk.sh/${SHEET_ID}/${encodeURIComponent(SHEET_NAME)}`;
+
+  const grid = document.getElementById("grid");
+  const state = document.getElementById("state");
+  const q = document.getElementById("q");
+
+  const fTodos = document.getElementById("fTodos");
+  const fPerdidos = document.getElementById("fPerdidos");
+  const fAtivos = document.getElementById("fAtivos");
+  const btnHome = document.getElementById("btnHome");
+
+  btnHome.onclick = () => location.href = "https://petalive.vercel.app/";
+
+  let allPets = [];
+  let filtro = "TODOS"; // TODOS | PERDIDOS | ATIVOS
+
+  function normalize(s){ return (s || "").toString().trim(); }
+  function lower(s){ return normalize(s).toLowerCase(); }
+
+  function normalizarFotoUrl(fotoUrl) {
+    const u = normalize(fotoUrl);
+    if (!u) return "";
+    if (u.includes("thumbnail?id=")) return u + (u.includes("&sz=") ? "" : "&sz=w800");
+    if (u.includes("uc?export=view&id=")) {
+      return u.replace("uc?export=view&id=", "thumbnail?id=") + "&sz=w800";
+    }
+    return u;
+  }
+
+  function statusNorm(p){
+    const s = normalize(p.status);
+    return s ? s : "Ativo";
+  }
+
+  function setActiveBtn() {
+    [fTodos, fPerdidos, fAtivos].forEach(b => b.classList.remove("active"));
+    if (filtro === "TODOS") fTodos.classList.add("active");
+    if (filtro === "PERDIDOS") fPerdidos.classList.add("active");
+    if (filtro === "ATIVOS") fAtivos.classList.add("active");
+  }
+
+  function filtrarEOrdenar(pets) {
+    const query = lower(q.value);
+    let out = pets.slice();
+
+    // filtro status
+    out = out.filter(p => {
+      const st = statusNorm(p);
+      if (filtro === "PERDIDOS") return st === "Perdido";
+      if (filtro === "ATIVOS") return st !== "Perdido";
+      return true;
+    });
+
+    // busca
+    if (query) {
+      out = out.filter(p => {
+        const hay = [
+          p.petId, p.petNome, p.tipo, p.raca, p.status
+        ].map(lower).join(" ");
+        return hay.includes(query);
+      });
+    }
+
+    // ordena: Perdido primeiro, depois por dataCadastro desc (se tiver)
+    out.sort((a,b) => {
+      const sa = statusNorm(a) === "Perdido" ? 0 : 1;
+      const sb = statusNorm(b) === "Perdido" ? 0 : 1;
+      if (sa !== sb) return sa - sb;
+
+      const da = Date.parse(a.dataCadastro || "") || 0;
+      const db = Date.parse(b.dataCadastro || "") || 0;
+      return db - da;
+    });
+
+    return out;
+  }
+
+  function render(pets){
+    const list = filtrarEOrdenar(pets);
+
+    if (!list.length) {
+      grid.style.display = "none";
+      state.style.display = "block";
+      state.textContent = "Nenhum pet encontrado com esse filtro/busca.";
+      return;
+    }
+
+    state.style.display = "none";
+    grid.style.display = "grid";
+    grid.innerHTML = "";
+
+    list.forEach(p => {
+      const petId = normalize(p.petId);
+      const nome = normalize(p.petNome) || "-";
+      const tipo = normalize(p.tipo) || "-";
+      const raca = normalize(p.raca) || "-";
+      const st = statusNorm(p);
+      const foto = normalizarFotoUrl(p.fotoUrl);
+
+      const pillClass = st === "Perdido" ? "pill lost" : "pill active";
+      const card = document.createElement("div");
+      card.className = "card";
+      card.onclick = () => {
+        if (!petId) return;
+        location.href = `https://petalive.vercel.app/pet.html?id=${encodeURIComponent(petId)}`;
+      };
+
+      card.innerHTML = `
+        <div class="imgBox">${foto ? `<img src="${foto}" alt="Foto do pet">` : "Sem foto"}</div>
+        <p class="name">${nome}</p>
+        <p class="meta">${tipo} • ${raca}</p>
+        <div class="pillRow">
+          <span class="${pillClass}">${st}</span>
+          ${petId ? `<span class="pill">${petId}</span>` : ""}
+        </div>
+      `;
+      grid.appendChild(card);
+    });
+  }
+
+  fTodos.onclick = () => { filtro = "TODOS"; setActiveBtn(); render(allPets); };
+  fPerdidos.onclick = () => { filtro = "PERDIDOS"; setActiveBtn(); render(allPets); };
+  fAtivos.onclick = () => { filtro = "ATIVOS"; setActiveBtn(); render(allPets); };
+
+  q.addEventListener("input", () => render(allPets));
+
+  fetch(DATA_URL)
+    .then(r => r.json())
+    .then(data => {
+      // garante formato
+      allPets = Array.isArray(data) ? data : [];
+      // remove linhas sem petId (se tiver)
+      allPets = allPets.filter(p => normalize(p.petId));
+      state.textContent = `Pets carregados: ${allPets.length}`;
+      render(allPets);
+    })
+    .catch(err => {
+      console.log(err);
+      grid.style.display = "none";
+      state.style.display = "block";
+      state.textContent = "Erro ao carregar a comunidade 😢";
+    });
+
+</script>
+</body>
+</html>
