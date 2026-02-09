@@ -1,0 +1,114 @@
+<!doctype html>
+<html lang="pt-br">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>PetAlive - Gerenciar</title>
+  <style>
+    body{font-family:Arial;max-width:520px;margin:24px auto;padding:0 12px}
+    .card{border:1px solid #ddd;border-radius:12px;padding:16px}
+    img{width:100%;max-height:260px;object-fit:cover;border-radius:10px;border:1px solid #eee}
+    button{width:100%;padding:12px;border:0;border-radius:10px;margin-top:10px;font-size:16px;cursor:pointer}
+    .ok{background:#111;color:#fff}
+    .warn{background:#c0392b;color:#fff}
+    .muted{color:#666;font-size:14px}
+    .msg{margin-top:10px;padding:10px;border-radius:10px;background:#f6f6f6}
+  </style>
+</head>
+<body>
+  <div class="card">
+    <h2>Gerenciar Pet</h2>
+    <p class="muted" id="pid"></p>
+    <img id="photo" alt="Foto do pet" style="display:none" />
+    <h3 id="name" style="margin:10px 0 0"></h3>
+    <p>Status: <b id="status">...</b></p>
+
+    <button class="warn" id="btnLost" disabled>Marcar como PERDIDO</button>
+    <button class="ok" id="btnActive" disabled>Marcar como ATIVO</button>
+
+    <div class="msg" id="msg">Validando token...</div>
+  </div>
+
+  <script>
+    const API_BASE = "https://SEU_N8N_DOMAIN/webhook"; 
+    // Exemplo: https://n8n.seudominio.com/webhook
+    // Se usar paths diferentes, ajuste abaixo.
+
+    const qs = new URLSearchParams(location.search);
+    const petId = qs.get("id");
+    const token = qs.get("t");
+
+    const elPid = document.getElementById("pid");
+    const elName = document.getElementById("name");
+    const elStatus = document.getElementById("status");
+    const elMsg = document.getElementById("msg");
+    const elPhoto = document.getElementById("photo");
+
+    const btnLost = document.getElementById("btnLost");
+    const btnActive = document.getElementById("btnActive");
+
+    elPid.textContent = petId ? `Pet ID: ${petId}` : "Pet ID não informado";
+
+    function setMsg(text){ elMsg.textContent = text; }
+
+    async function post(path, body){
+      const res = await fetch(`${API_BASE}/${path}`,{
+        method:"POST",
+        headers:{ "Content-Type":"application/json" },
+        body: JSON.stringify(body)
+      });
+      return res.json();
+    }
+
+    async function validate(){
+      if(!petId || !token){
+        setMsg("Link inválido. Falta id ou token.");
+        return;
+      }
+      try{
+        const data = await post("pet/manage/validate", { petId, token });
+        if(!data.ok){
+          setMsg(data.error || "Token inválido/expirado.");
+          return;
+        }
+        elName.textContent = data.petNome || "";
+        elStatus.textContent = data.status || "";
+        if(data.fotoUrl){
+          elPhoto.src = data.fotoUrl;
+          elPhoto.style.display = "block";
+        }
+        btnLost.disabled = false;
+        btnActive.disabled = false;
+        setMsg("Token validado. Você pode alterar o status.");
+      }catch(e){
+        setMsg("Erro ao validar. Verifique API_BASE/CORS.");
+      }
+    }
+
+    async function setStatus(newStatus){
+      setMsg("Atualizando status...");
+      btnLost.disabled = true;
+      btnActive.disabled = true;
+      try{
+        const data = await post("pet/manage/setStatus", { petId, token, newStatus });
+        if(!data.ok){
+          setMsg(data.error || "Falha ao atualizar.");
+          return;
+        }
+        elStatus.textContent = newStatus;
+        setMsg("Status atualizado com sucesso.");
+      }catch(e){
+        setMsg("Erro ao atualizar. Verifique API_BASE/CORS.");
+      }finally{
+        btnLost.disabled = false;
+        btnActive.disabled = false;
+      }
+    }
+
+    btnLost.onclick = () => setStatus("Perdido");
+    btnActive.onclick = () => setStatus("Ativo");
+
+    validate();
+  </script>
+</body>
+</html>
