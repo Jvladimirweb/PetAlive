@@ -6,7 +6,181 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
 
   <style>
-    body {
+    body {<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <title>PetAlive</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  <style>
+    body { font-family: Arial, sans-serif; background: #f4f6f8; padding: 20px; }
+    .card { max-width: 420px; margin: auto; background: #fff; border-radius: 12px; padding: 16px; box-shadow: 0 4px 10px rgba(0,0,0,.1); text-align: center; }
+    img.pet { width: 100%; border-radius: 10px; }
+    .status { margin: 10px 0; font-weight: bold; color: green; }
+    .status.perdido { color: #d32f2f; }
+    a.button, button.button {
+      display: block; width: 100%;
+      margin-top: 12px; padding: 12px;
+      color: white; text-decoration: none;
+      border-radius: 8px; font-weight: bold;
+      border: 0; cursor: pointer;
+      font-size: 16px;
+      box-sizing: border-box;
+    }
+    .btn-whats { background: #25d366; }
+    .btn-manage { background: #111; }
+    .btn-home { background:#555; margin-top:10px; }
+    .qr { margin-top: 14px; border-radius: 10px; max-width: 260px; width: 100%; }
+
+    /* Modal */
+    .modal-backdrop{
+      position:fixed; inset:0; background:rgba(0,0,0,.45);
+      display:none; align-items:center; justify-content:center; padding:16px;
+    }
+    .modal{
+      width:100%; max-width:420px; background:#fff; border-radius:14px; padding:16px;
+      box-shadow:0 10px 30px rgba(0,0,0,.2); text-align:left;
+    }
+    .modal h3{ margin:0 0 8px; }
+    .modal p{ margin:0 0 12px; color:#444; font-size:14px; }
+    .modal input{
+      width:100%; padding:12px; border:1px solid #ddd; border-radius:10px; font-size:16px;
+      box-sizing:border-box;
+    }
+    .row{ display:flex; gap:10px; margin-top:12px; }
+    .row button{ flex:1; }
+    .btn-cancel{ background:#eee; color:#111; }
+    .btn-go{ background:#111; color:#fff; }
+    .hint{ margin-top:10px; font-size:13px; color:#666; }
+    .hint a{ color:#111; }
+  </style>
+
+  <script>
+    function copiarLink(link){
+      navigator.clipboard.writeText(link);
+      alert("Link copiado!");
+    }
+
+    function normalizarFotoUrl(fotoUrl) {
+      if (!fotoUrl) return "";
+      if (fotoUrl.includes("thumbnail?id=")) return fotoUrl;
+      if (fotoUrl.includes("uc?export=view&id=")) {
+        return fotoUrl.replace("uc?export=view&id=", "thumbnail?id=") + "&sz=w800";
+      }
+      return fotoUrl;
+    }
+
+    // ====== Manage by token (tutor) ======
+    function abrirModalToken(petId){
+      window.__petIdManage = petId;
+      const backdrop = document.getElementById("modalBackdrop");
+      const input = document.getElementById("tokenInput");
+      input.value = "";
+      backdrop.style.display = "flex";
+      setTimeout(() => input.focus(), 50);
+    }
+
+    function fecharModalToken(){
+      document.getElementById("modalBackdrop").style.display = "none";
+    }
+
+    function irParaManage(){
+      const petId = window.__petIdManage;
+      const token = (document.getElementById("tokenInput").value || "").trim();
+      if(!petId) { alert("PetId inválido."); return; }
+      if(!token) { alert("Digite o token recebido por SMS."); return; }
+
+      // redireciona para manage com token
+      const url = `https://petalive.vercel.app/manage.html?id=${encodeURIComponent(petId)}&t=${encodeURIComponent(token)}`;
+      window.location.href = url;
+    }
+
+    // Fecha modal clicando fora
+    function backdropClick(e){
+      if(e.target && e.target.id === "modalBackdrop") fecharModalToken();
+    }
+  </script>
+</head>
+
+<body>
+
+<div class="card" id="petCard">
+  <p>Carregando dados do pet...</p>
+</div>
+
+<!-- Modal token -->
+<div class="modal-backdrop" id="modalBackdrop" onclick="backdropClick(event)">
+  <div class="modal">
+    <h3>Área do tutor</h3>
+    <p>Digite o <b>token</b> recebido por SMS para gerenciar o status do seu pet.</p>
+    <input id="tokenInput" placeholder="Ex: bb9qy6dwckorl4xe61gcvc" autocomplete="off" />
+    <div class="row">
+      <button class="button btn-cancel" onclick="fecharModalToken()">Cancelar</button>
+      <button class="button btn-go" onclick="irParaManage()">Continuar</button>
+    </div>
+    <div class="hint">
+      Não tem o token? Use a opção “Enviar novo link por SMS” na página de gestão ou peça à PetAlive.
+    </div>
+  </div>
+</div>
+
+<script>
+  const params = new URLSearchParams(window.location.search);
+  const petIdParam = (params.get("id") || "").trim();
+
+  const SHEET_ID = "1kK-zkAkyYEyF4DCmd73KU-RWtSZuNiNXD3EI1eFr-7c";
+  const SHEET_NAME = "Página1";
+  const url = `https://opensheet.elk.sh/${SHEET_ID}/${SHEET_NAME}`;
+
+  fetch(url)
+    .then(res => res.json())
+    .then(data => {
+      const pet = data.find(p => (p.petId || "").trim() === petIdParam);
+
+      if (!pet) {
+        document.getElementById("petCard").innerHTML = "<p>Pet não encontrado 😢</p>";
+        return;
+      }
+
+      const statusAtual = (pet.status && pet.status.trim()) ? pet.status.trim() : "Ativo";
+      const foto = normalizarFotoUrl(pet.fotoUrl);
+
+      const statusClass = statusAtual === "Perdido" ? "status perdido" : "status";
+
+      document.getElementById("petCard").innerHTML = `
+        ${foto ? `<img class="pet" src="${foto}" alt="Foto do pet">` : ""}
+        <h2>${pet.petNome || "-"}</h2>
+        <p>${pet.tipo || "-"} • ${pet.raca || "-"}</p>
+        <p><strong>Tutor:</strong> ${pet.tutor || "-"}</p>
+
+        <p class="${statusClass}">Status: ${statusAtual}</p>
+
+        <!-- Tutor: pede token e envia para manage -->
+        <button class="button btn-manage" onclick="abrirModalToken('${pet.petId}')">
+          Sou o tutor • Gerenciar status
+        </button>
+
+        <!-- WhatsApp (se você quiser manter, ok; mas lembre que isso expõe o contato) -->
+        <a class="button btn-whats"
+           href="https://wa.me/55${pet.contato || ''}" target="_blank">
+          Falar com o tutor
+        </a>
+
+        <a class="button btn-home"
+           href="https://petalive.vercel.app">
+           Voltar para a Home
+        </a>
+      `;
+    })
+    .catch(() => {
+      document.getElementById("petCard").innerHTML = "<p>Erro ao carregar dados 😢</p>";
+    });
+</script>
+
+</body>
+</html>
+
       font-family: Arial, sans-serif;
       background: #f4f6f8;
       padding: 20px;
