@@ -25,7 +25,8 @@
     .error { margin-top:14px; padding:12px; border-radius:12px; background:#fff2f2; border:1px solid #ffd0d0; color:#a40000; display:none; font-size:13px; white-space:pre-wrap; }
     .result { margin-top:18px; background:#f9fafb; border:1px solid #eef1f4; border-radius:12px; padding:14px; display:none; }
     .ok { color:#1b5e20; font-weight:bold; }
-    .petid { font-size:18px; font-weight:bold; letter-spacing:.5px; }
+    .petid { font-size:18px; font-weight:bold; letter-spacing:.5px; margin-top:8px; }
+
     .actions { display:flex; gap:10px; margin-top:12px; }
     .btn2 { flex:1; padding:11px; border-radius:10px; border:0; cursor:pointer; font-weight:bold; }
     .btnCopy { background:#333; color:#fff; }
@@ -41,29 +42,29 @@
     </div>
 
     <form id="petForm">
-      <label for="petNome">Nome do pet</label>
-      <input id="petNome" name="petNome" placeholder="Ex: Caramelo" required />
+      <label>Nome do pet</label>
+      <input name="petNome" required />
 
       <div class="row">
         <div>
-          <label for="tipo">Tipo</label>
-          <input id="tipo" name="tipo" placeholder="Cachorro, gato, etc" required />
+          <label>Tipo</label>
+          <input name="tipo" required />
         </div>
         <div>
-          <label for="raca">Raça</label>
-          <input id="raca" name="raca" placeholder="Ex: Dog francês" required />
+          <label>Raça</label>
+          <input name="raca" required />
         </div>
       </div>
 
-      <label for="tutor">Nome do tutor</label>
-      <input id="tutor" name="tutor" placeholder="Ex: Vlad" required />
+      <label>Nome do tutor</label>
+      <input name="tutor" required />
 
-      <label for="contato">WhatsApp do tutor (apenas números)</label>
-      <input id="contato" name="contato" placeholder="Ex: 21999999999" inputmode="numeric" pattern="[0-9]{10,13}" required />
-      <div class="hint">Dica: Use DDD + número. Ex: <b>21999999999</b>. Sem +55, sem espaços.</div>
+      <label>WhatsApp do tutor (apenas números)</label>
+      <input name="contato" pattern="[0-9]{10,13}" required />
+      <div class="hint">Ex: 21999999999 (sem +55)</div>
 
-      <label for="foto">Foto do pet</label>
-      <input id="foto" name="foto" type="file" accept="image/*" required />
+      <label>Foto do pet</label>
+      <input name="foto" type="file" accept="image/*" required />
 
       <button id="btnSubmit" type="submit">Cadastrar Pet</button>
       <div class="hint">Após cadastrar, você receberá o <b>Pet ID</b> por SMS.</div>
@@ -73,9 +74,7 @@
 
     <div class="result" id="resultBox">
       <div class="ok">✅ Pet cadastrado com sucesso!</div>
-      <div class="hint" style="margin-top:10px;">
-        Enviamos esse código também por SMS para o tutor. Use em “Acessar meu pet” na Home.
-      </div>
+      <div class="petid" id="resultPetId">-</div>
 
       <div class="actions">
         <button class="btn2 btnCopy" id="btnCopy" type="button">Copiar Pet ID</button>
@@ -85,14 +84,13 @@
   </div>
 
   <script>
-    const N8N_WEBHOOK_URL = "https://bbd6-2804-14d-5c77-8c5b-9d0e-bc5c-6d57-bf58.ngrok-free.app/webhook/pet-create";
+    const N8N_WEBHOOK_URL = "https://SEU-NGROK.ngrok-free.app/webhook/pet-create";
 
     const form = document.getElementById("petForm");
     const btn = document.getElementById("btnSubmit");
     const errorBox = document.getElementById("errorBox");
     const resultBox = document.getElementById("resultBox");
     const resultPetId = document.getElementById("resultPetId");
-
     const btnCopy = document.getElementById("btnCopy");
     const btnHome = document.getElementById("btnHome");
 
@@ -100,6 +98,7 @@
       errorBox.style.display = "block";
       errorBox.textContent = msg;
     }
+
     function clearUI() {
       errorBox.style.display = "none";
       errorBox.textContent = "";
@@ -107,23 +106,18 @@
       resultPetId.textContent = "-";
     }
 
-    btnHome.addEventListener("click", () => window.location.href = "/");
+    btnHome.onclick = () => window.location.href = "https://petalive.vercel.app";
 
-    btnCopy.addEventListener("click", async () => {
-      const id = (resultPetId.textContent || "").trim();
+    btnCopy.onclick = async () => {
+      const id = resultPetId.textContent.trim();
       if (!id || id === "-") return alert("Sem Pet ID.");
-      try { await navigator.clipboard.writeText(id); alert("Pet ID copiado!"); }
-      catch { prompt("Copie o Pet ID:", id); }
-    });
+      await navigator.clipboard.writeText(id);
+      alert("Pet ID copiado!");
+    };
 
     form.addEventListener("submit", async (e) => {
       e.preventDefault();
       clearUI();
-
-      if (!N8N_WEBHOOK_URL.includes("/webhook/pet-create")) {
-        showError("Configure N8N_WEBHOOK_URL com sua URL pública + /webhook/pet-create");
-        return;
-      }
 
       btn.disabled = true;
       btn.textContent = "Enviando...";
@@ -133,16 +127,13 @@
 
         const res = await fetch(N8N_WEBHOOK_URL, {
           method: "POST",
-          headers: { "ngrok-skip-browser-warning": "true" },
           body: fd,
         });
 
-        const raw = await res.text();
-        let data = null;
-        try { data = JSON.parse(raw); } catch {}
+        const data = await res.json();
 
-        if (!res.ok || !data || data.ok !== true) {
-          showError("Não foi possível cadastrar. Tente novamente.\n\n" + (raw || ""));
+        if (!res.ok || data.ok !== true) {
+          showError("Erro ao cadastrar.");
           return;
         }
 
@@ -150,7 +141,7 @@
         resultBox.style.display = "block";
 
       } catch (err) {
-        showError("Erro de conexão. Tente novamente.\n\n" + (err?.message || err));
+        showError("Erro de conexão.\n" + err.message);
       } finally {
         btn.disabled = false;
         btn.textContent = "Cadastrar Pet";
