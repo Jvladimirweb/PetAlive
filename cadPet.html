@@ -51,11 +51,16 @@ button { border-radius:12px; }
   <div class="error" id="errorBox"></div>
 
   <div class="result" id="resultBox">
+  <div style="font-size:18px;font-weight:bold;">
     ✅ Pet cadastrado com sucesso!
-    <div class="petid" id="resultPetId"></div>
   </div>
-</div>
 
+    <div style="margin-top:10px;color:#444;">
+      Você receberá seu <b>Pet ID por SMS</b>.<br>
+      Guarde em local seguro.
+    </div>
+  </div>
+  
 <script>
 const N8N_WEBHOOK_URL = "https://bbd6-2804-14d-5c77-8c5b-9d0e-bc5c-6d57-bf58.ngrok-free.app/webhook/";
 
