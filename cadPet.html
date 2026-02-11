@@ -1,23 +1,109 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-<meta charset="UTF-8" />
-<title>PetAlive • Cadastro</title>
-<meta name="viewport" content="width=device-width, initial-scale=1" />
+<meta charset="UTF-8">
+<title>Cadastro PetAlive</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
 
 <style>
-body { font-family: Arial; background:#f4f6f8; padding:20px; }
-.container { max-width:520px; margin:auto; background:#fff; border-radius:16px; padding:22px; box-shadow:0 10px 25px rgba(0,0,0,.08); }
-h2 { margin: 0 0 14px; font-size: 28px; }
-label { margin-top:14px; font-weight:600; color:#222; }
-input { background:#f7fafc; border:1px solid #e2e8f0; }
-input:focus { border-color:#2fbf5b; box-shadow:0 0 0 3px rgba(47,191,91,.15); }
-.result { background:#ecfff1; border:1px solid #bff0cd; border-radius:14px; }
-.petid { font-size:20px; }
-button { border-radius:12px; }
-.error { margin-top:14px; padding:12px; border-radius:12px; background:#fff2f2; border:1px solid #ffd0d0; color:#a40000; display:none; }
-.result { margin-top:18px; display:none; padding:14px; background:#f1fff5; border-radius:12px; border:1px solid #c8f5d2; }
-.petid { font-weight:bold; margin-top:8px; font-size:18px; }
+body {
+  font-family: Arial, sans-serif;
+  background:#f4f6f8;
+  padding:20px;
+}
+
+.container {
+  max-width:520px;
+  margin:auto;
+  background:#fff;
+  border-radius:18px;
+  padding:24px;
+  box-shadow:0 12px 30px rgba(0,0,0,.08);
+}
+
+h2 {
+  margin-bottom:18px;
+}
+
+label {
+  display:block;
+  margin-top:14px;
+  font-weight:600;
+  font-size:14px;
+}
+
+input {
+  width:100%;
+  padding:12px;
+  border-radius:12px;
+  border:1px solid #e0e0e0;
+  margin-top:6px;
+  box-sizing:border-box;
+  background:#f9fbff;
+}
+
+input:focus {
+  outline:none;
+  border-color:#2fbf5b;
+  box-shadow:0 0 0 3px rgba(47,191,91,.15);
+}
+
+.row {
+  display:flex;
+  gap:12px;
+}
+
+.row > div {
+  flex:1;
+}
+
+button {
+  width:100%;
+  margin-top:20px;
+  padding:14px;
+  background:#2fbf5b;
+  color:#fff;
+  border:0;
+  border-radius:14px;
+  font-size:16px;
+  font-weight:bold;
+  cursor:pointer;
+  transition:.2s;
+}
+
+button:hover {
+  background:#27a94f;
+}
+
+button:disabled {
+  opacity:.6;
+}
+
+.hint {
+  font-size:12px;
+  color:#777;
+  margin-top:8px;
+}
+
+.error {
+  margin-top:16px;
+  padding:14px;
+  border-radius:14px;
+  background:#fff2f2;
+  border:1px solid #ffd0d0;
+  color:#a40000;
+  display:none;
+}
+
+.result {
+  margin-top:18px;
+  padding:18px;
+  border-radius:16px;
+  background:#ecfff1;
+  border:1px solid #bff0cd;
+  display:none;
+  text-align:center;
+}
 </style>
 </head>
 
@@ -27,49 +113,53 @@ button { border-radius:12px; }
   <h2>Cadastro PetAlive</h2>
 
   <form id="petForm">
+
     <label>Nome do pet</label>
     <input name="petNome" required>
 
-    <label>Tipo</label>
-    <input name="tipo" required>
-
-    <label>Raça</label>
-    <input name="raca" required>
+    <div class="row">
+      <div>
+        <label>Tipo</label>
+        <input name="tipo" required>
+      </div>
+      <div>
+        <label>Raça</label>
+        <input name="raca" required>
+      </div>
+    </div>
 
     <label>Nome do tutor</label>
     <input name="tutor" required>
 
     <label>WhatsApp (apenas números)</label>
     <input name="contato" pattern="[0-9]{10,13}" required>
+    <div class="hint">Ex: 21999999999 (sem +55)</div>
 
     <label>Foto do pet</label>
     <input type="file" name="foto" accept="image/*" required>
 
     <button id="btnSubmit" type="submit">Cadastrar Pet</button>
+
   </form>
 
   <div class="error" id="errorBox"></div>
 
-    <div class="result" id="resultBox">
-      <div style="font-size:18px;font-weight:bold;">
-        ✅ Pet cadastrado com sucesso!
-      </div>
-  
-      <div style="margin-top:10px;color:#444;">
-        Você receberá seu <b>Pet ID por SMS</b>.<br>
-        Guarde em local seguro.
-      </div>
+  <div class="result" id="resultBox">
+    <strong>✅ Pet cadastrado com sucesso!</strong>
+    <div style="margin-top:10px;">
+      Você receberá seu <b>Pet ID por SMS</b>.<br>
+      Guarde em local seguro.
     </div>
-  </div> 
+  </div>
 </div>
+
 <script>
-const N8N_WEBHOOK_URL = "https://bbd6-2804-14d-5c77-8c5b-9d0e-bc5c-6d57-bf58.ngrok-free.app/webhook/";
+const N8N_WEBHOOK_URL = "https://SEU-NGROK.ngrok-free.app/webhook/pet-create";
 
 const form = document.getElementById("petForm");
 const btn = document.getElementById("btnSubmit");
 const errorBox = document.getElementById("errorBox");
 const resultBox = document.getElementById("resultBox");
-const resultPetId = document.getElementById("resultPetId");
 
 function showError(msg){
   errorBox.style.display = "block";
@@ -80,7 +170,6 @@ function clearUI(){
   errorBox.style.display = "none";
   errorBox.textContent = "";
   resultBox.style.display = "none";
-  resultPetId.textContent = "";
 }
 
 form.addEventListener("submit", async (e) => {
@@ -96,32 +185,22 @@ form.addEventListener("submit", async (e) => {
     const res = await fetch(N8N_WEBHOOK_URL, {
       method: "POST",
       mode: "cors",
-      headers: {
-        "ngrok-skip-browser-warning": "true"
-      },
+      headers: { "ngrok-skip-browser-warning": "true" },
       body: fd
     });
 
-    const text = await res.text();
+    const data = await res.json();
 
-    if (!res.ok) {
-      showError("Erro no servidor.\n\n" + text);
+    if (!res.ok || data.ok !== true) {
+      showError("Erro ao cadastrar.");
       return;
     }
 
-    let data;
-    try { data = JSON.parse(text); } catch {}
-
-    if (!data || data.ok !== true) {
-      showError("Resposta inesperada do servidor.\n\n" + text);
-      return;
-    }
-
-    resultPetId.textContent = "Pet ID: " + (data.petId || "-");
     resultBox.style.display = "block";
+    form.reset();
 
   } catch (err) {
-    showError("Erro de conexão.\n\n" + err.message);
+    showError("Erro de conexão.");
   }
 
   btn.disabled = false;
