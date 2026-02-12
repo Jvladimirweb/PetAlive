@@ -106,12 +106,33 @@
       if(e.target && e.target.id === "modalAvisoBackdrop") fecharModalAviso();
     }
 
-    async function enviarAviso(){
-      const pet = window.__petAviso;
-      if(!pet || !pet.petId){
-        alert("Pet inválido.");
+    async function enviarAviso() {
+      const onde = document.getElementById("ondeViu").value;
+      const quando = document.getElementById("quandoViu").value;
+      const obs = document.getElementById("observacoes").value;
+      const contato = document.getElementById("seuContato").value;
+    
+      if (!onde || !quando) {
+        alert("Preencha onde e quando viu o pet.");
         return;
       }
+    
+      const numeroPetAlive = "5521969876936"; // 55 + DDD + número
+    
+      const mensagem = `
+    Aviso sobre pet encontrado:
+    
+    📍 Onde: ${onde}
+    📅 Quando: ${quando}
+    📝 Observações: ${obs || "Não informado"}
+    📞 Meu contato: ${contato || "Não informado"}
+      `;
+    
+      const url = `https://wa.me/${numeroPetAlive}?text=${encodeURIComponent(mensagem)}`;
+    
+      window.open(url, "_blank");
+    }
+
 
       const payload = {
         petId: pet.petId,
@@ -188,7 +209,7 @@
 
     <div class="row">
       <button class="button btn-cancel" onclick="fecharModalAviso()">Cancelar</button>
-      <button class="button btn-go" onclick="enviarAviso()">Enviar aviso</button>
+      <button onclick="enviarAviso()">Enviar aviso</button>
     </div>
 
     <div class="hint">Não mostramos o contato do tutor para evitar golpes.</div>
