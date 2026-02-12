@@ -79,6 +79,15 @@ button:disabled {
   opacity:.6;
 }
 
+/* 🔵 BOTÃO HOME */
+.btn-home {
+  background:#1976d2;
+}
+
+.btn-home:hover {
+  background:#1565c0;
+}
+
 .hint {
   font-size:12px;
   color:#777;
@@ -139,6 +148,12 @@ button:disabled {
     <input type="file" name="foto" accept="image/*" required>
 
     <button id="btnSubmit" type="submit">Cadastrar Pet</button>
+
+    <!-- 🔵 NOVO BOTÃO -->
+    <button type="button" class="btn-home"
+      onclick="window.location.href='https://petalive.vercel.app/'">
+      ← Voltar para Home
+    </button>
 
   </form>
 
