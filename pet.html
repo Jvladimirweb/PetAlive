@@ -22,10 +22,10 @@
     }
 
     .btn-alert { background:#ff9800; }
-    .btn-manage { background:#111; }
+    .btn-tutor { background:#111; }
     .btn-home { background:#555; }
 
-    /* Modal */
+    /* Modal base */
     .modal-backdrop{
       position:fixed; inset:0; background:rgba(0,0,0,.45);
       display:none; align-items:center; justify-content:center; padding:16px;
@@ -60,7 +60,7 @@
       return fotoUrl;
     }
 
-    // ===== Modal Avisar PetAlive =====
+    // ===== Avisar PetAlive (WhatsApp) =====
     function abrirModalAviso(){
       document.getElementById("ondeViu").value = "";
       document.getElementById("quandoViu").value = "";
@@ -114,6 +114,28 @@ Link: ${location.href}
       window.open(url, "_blank");
       fecharModalAviso();
     }
+
+    // ===== Tutor (token -> manage) =====
+    function abrirModalTutor(){
+      document.getElementById("tokenInput").value = "";
+      document.getElementById("modalTutorBackdrop").style.display = "flex";
+      setTimeout(() => document.getElementById("tokenInput").focus(), 50);
+    }
+    function fecharModalTutor(){
+      document.getElementById("modalTutorBackdrop").style.display = "none";
+    }
+    function tutorBackdropClick(e){
+      if(e.target && e.target.id === "modalTutorBackdrop") fecharModalTutor();
+    }
+    function irParaManage(){
+      const pet = window.__petAtual;
+      const token = (document.getElementById("tokenInput").value || "").trim();
+      if(!pet || !pet.petId){ alert("Pet inválido."); return; }
+      if(!token){ alert("Digite o token recebido por SMS."); return; }
+
+      const url = `https://petalive.vercel.app/manage.html?id=${encodeURIComponent(pet.petId)}&t=${encodeURIComponent(token)}`;
+      window.location.href = url;
+    }
   </script>
 </head>
 
@@ -143,6 +165,23 @@ Link: ${location.href}
   </div>
 </div>
 
+<!-- Modal Tutor -->
+<div class="modal-backdrop" id="modalTutorBackdrop" onclick="tutorBackdropClick(event)">
+  <div class="modal">
+    <h3>Área do tutor</h3>
+    <p>Digite o <b>token</b> recebido por SMS para gerenciar o status do seu pet.</p>
+
+    <input id="tokenInput" placeholder="Cole o token aqui" autocomplete="off" />
+
+    <div class="row">
+      <button class="button btn-cancel" onclick="fecharModalTutor()">Cancelar</button>
+      <button class="button btn-go" onclick="irParaManage()">Continuar</button>
+    </div>
+
+    <div class="hint">O token é pessoal e expira. Guarde em local seguro.</div>
+  </div>
+</div>
+
 <script>
   const params = new URLSearchParams(window.location.search);
   const petIdParam = (params.get("id") || "").trim();
@@ -161,17 +200,18 @@ Link: ${location.href}
         return;
       }
 
-      // salva global pro WhatsApp
+      const statusAtual = (pet.status && pet.status.trim()) ? pet.status.trim() : "Ativo";
+      const foto = normalizarFotoUrl(pet.fotoUrl);
+      const statusClass = statusAtual === "Perdido" ? "status perdido" : "status";
+
+      // global pro WhatsApp + tutor
       window.__petAtual = {
         petId: (pet.petId || "").trim(),
         petNome: pet.petNome || "",
         tipo: pet.tipo || "",
-        raca: pet.raca || ""
+        raca: pet.raca || "",
+        status: statusAtual
       };
-
-      const statusAtual = (pet.status && pet.status.trim()) ? pet.status.trim() : "Ativo";
-      const foto = normalizarFotoUrl(pet.fotoUrl);
-      const statusClass = statusAtual === "Perdido" ? "status perdido" : "status";
 
       document.getElementById("petCard").innerHTML = `
         ${foto ? `<img class="pet" src="${foto}" alt="Foto do pet">` : ""}
@@ -182,6 +222,10 @@ Link: ${location.href}
 
         <button class="button btn-alert" onclick="abrirModalAviso()">
           Avisar a PetAlive
+        </button>
+
+        <button class="button btn-tutor" onclick="abrirModalTutor()">
+          Sou o tutor • Gerenciar status
         </button>
 
         <a class="button btn-home" href="https://petalive.vercel.app">
