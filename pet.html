@@ -6,30 +6,30 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
 
   <style>
-    body { font-family: Arial, sans-serif; background: #f4f6f8; padding: 20px; }
-    .card { max-width: 420px; margin: auto; background: #fff; border-radius: 12px; padding: 16px; box-shadow: 0 4px 10px rgba(0,0,0,.1); text-align: center; }
-    img.pet { width: 100%; border-radius: 10px; }
-    .status { margin: 10px 0; font-weight: bold; color: green; }
-    .status.perdido { color: #d32f2f; }
+    body { font-family: Arial, sans-serif; background:#f4f6f8; padding:20px; }
+    .card { max-width: 420px; margin:auto; background:#fff; border-radius: 12px; padding: 16px; box-shadow: 0 4px 10px rgba(0,0,0,.1); text-align:center; }
+    img.pet { width:100%; border-radius:10px; }
+    .status { margin:10px 0; font-weight:bold; color: green; }
+    .status.perdido { color:#d32f2f; }
 
-    a.button, button.button {
-      display: block; width: 100%;
-      margin-top: 12px; padding: 12px;
-      color: white; text-decoration: none;
-      border-radius: 8px; font-weight: bold;
-      border: 0; cursor: pointer; font-size: 16px;
-      box-sizing: border-box;
+    button.button, a.button {
+      display:block; width:100%;
+      margin-top:12px; padding:12px;
+      color:#fff; text-decoration:none;
+      border-radius:10px; font-weight:bold;
+      border:0; cursor:pointer; font-size:16px;
+      box-sizing:border-box;
     }
 
-    .btn-manage { background: #111; }
-    .btn-alert { background: #ff9800; }
-    .btn-home { background:#555; margin-top:10px; }
+    .btn-alert { background:#ff9800; }
+    .btn-manage { background:#111; }
+    .btn-home { background:#555; }
 
-    /* Modal base */
+    /* Modal */
     .modal-backdrop{
       position:fixed; inset:0; background:rgba(0,0,0,.45);
       display:none; align-items:center; justify-content:center; padding:16px;
-      z-index: 999;
+      z-index:999;
     }
     .modal{
       width:100%; max-width:420px; background:#fff; border-radius:14px; padding:16px;
@@ -41,7 +41,7 @@
       width:100%; padding:12px; border:1px solid #ddd; border-radius:10px; font-size:16px;
       box-sizing:border-box;
     }
-    .modal textarea{ min-height: 90px; resize: vertical; }
+    .modal textarea{ min-height:90px; resize:vertical; }
     .row{ display:flex; gap:10px; margin-top:12px; }
     .row button{ flex:1; }
     .btn-cancel{ background:#eee; color:#111; }
@@ -50,11 +50,7 @@
   </style>
 
   <script>
-    // ====== CONFIG: Avisar PetAlive (n8n webhook) ======
-    // Coloque aqui o webhook do WORKFLOW de "Avisar PetAlive"
-    // Exemplo: https://bbd6-2804-14d-5c77-8c5b-9d0e-bc5c-6d57-bf58.ngrok-free.app/webhook/pet-alert
-    const ALERT_WEBHOOK_URL = "https://bbd6-2804-14d-5c77-8c5b-9d0e-bc5c-6d57-bf58.ngrok-free.app/webhook/";
-
+    // helper: garante link de imagem direto
     function normalizarFotoUrl(fotoUrl) {
       if (!fotoUrl) return "";
       if (fotoUrl.includes("thumbnail?id=")) return fotoUrl;
@@ -64,34 +60,8 @@
       return fotoUrl;
     }
 
-    // ====== Modal Tutor (token) ======
-    function abrirModalToken(petId){
-      window.__petIdManage = petId;
-      const backdrop = document.getElementById("modalTutorBackdrop");
-      const input = document.getElementById("tokenInput");
-      input.value = "";
-      backdrop.style.display = "flex";
-      setTimeout(() => input.focus(), 50);
-    }
-    function fecharModalToken(){
-      document.getElementById("modalTutorBackdrop").style.display = "none";
-    }
-    function irParaManage(){
-      const petId = window.__petIdManage;
-      const token = (document.getElementById("tokenInput").value || "").trim();
-      if(!petId) { alert("PetId inválido."); return; }
-      if(!token) { alert("Digite o token recebido por SMS."); return; }
-
-      const url = `https://petalive.vercel.app/manage.html?id=${encodeURIComponent(petId)}&t=${encodeURIComponent(token)}`;
-      window.location.href = url;
-    }
-    function tutorBackdropClick(e){
-      if(e.target && e.target.id === "modalTutorBackdrop") fecharModalToken();
-    }
-
-    // ====== Modal Avisar PetAlive ======
-    function abrirModalAviso(pet){
-      window.__petAviso = pet;
+    // ===== Modal Avisar PetAlive =====
+    function abrirModalAviso(){
       document.getElementById("ondeViu").value = "";
       document.getElementById("quandoViu").value = "";
       document.getElementById("obsViu").value = "";
@@ -106,72 +76,43 @@
       if(e.target && e.target.id === "modalAvisoBackdrop") fecharModalAviso();
     }
 
-    async function enviarAviso() {
-      const onde = document.getElementById("ondeViu").value;
-      const quando = document.getElementById("quandoViu").value;
-      const obs = document.getElementById("observacoes").value;
-      const contato = document.getElementById("seuContato").value;
-    
-      if (!onde || !quando) {
+    function enviarAvisoWhats(){
+      const pet = window.__petAtual;
+      if(!pet || !pet.petId){
+        alert("Pet inválido.");
+        return;
+      }
+
+      const onde = (document.getElementById("ondeViu").value || "").trim();
+      const quando = (document.getElementById("quandoViu").value || "").trim();
+      const obs = (document.getElementById("obsViu").value || "").trim();
+      const whats = (document.getElementById("whatsOpcional").value || "").trim();
+
+      if(!onde || !quando){
         alert("Preencha onde e quando viu o pet.");
         return;
       }
-    
+
       const numeroPetAlive = "5521969876936"; // 55 + DDD + número
-    
-      const mensagem = `
-    Aviso sobre pet encontrado:
-    
-    📍 Onde: ${onde}
-    📅 Quando: ${quando}
-    📝 Observações: ${obs || "Não informado"}
-    📞 Meu contato: ${contato || "Não informado"}
-      `;
-    
-      const url = `https://wa.me/${numeroPetAlive}?text=${encodeURIComponent(mensagem)}`;
-    
+
+      const msg =
+`🐾 PetAlive - Aviso de pet visto/encontrado
+
+Pet ID: ${pet.petId}
+Nome: ${pet.petNome || "-"}
+Tipo/Raça: ${pet.tipo || "-"} / ${pet.raca || "-"}
+
+📍 Onde: ${onde}
+🕒 Quando: ${quando}
+📝 Observações: ${obs || "—"}
+
+📲 Meu WhatsApp (opcional): ${whats || "—"}
+Link: ${location.href}
+`;
+
+      const url = `https://wa.me/${numeroPetAlive}?text=${encodeURIComponent(msg)}`;
       window.open(url, "_blank");
-    }
-
-
-      const payload = {
-        petId: pet.petId,
-        petNome: pet.petNome || "",
-        tipo: pet.tipo || "",
-        raca: pet.raca || "",
-        status: pet.status || "",
-        ondeViu: (document.getElementById("ondeViu").value || "").trim(),
-        quandoViu: (document.getElementById("quandoViu").value || "").trim(),
-        observacoes: (document.getElementById("obsViu").value || "").trim(),
-        whatsapp: (document.getElementById("whatsOpcional").value || "").trim(),
-        pageUrl: window.location.href
-      };
-
-      if(!payload.ondeViu || !payload.quandoViu){
-        alert("Preencha: onde viu e quando viu.");
-        return;
-      }
-
-      try{
-        const res = await fetch(ALERT_WEBHOOK_URL, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(payload)
-        });
-
-        const data = await res.json().catch(() => ({}));
-        if(!res.ok || data.ok !== true){
-          console.log("Resposta alerta:", res.status, data);
-          alert("Não foi possível enviar o aviso agora.");
-          return;
-        }
-
-        fecharModalAviso();
-        alert("Aviso enviado. A PetAlive vai analisar e te retornar se necessário.");
-      }catch(e){
-        console.log(e);
-        alert("Erro de conexão ao enviar aviso.");
-      }
+      fecharModalAviso();
     }
   </script>
 </head>
@@ -182,34 +123,20 @@
   <p>Carregando dados do pet...</p>
 </div>
 
-<!-- Modal Tutor -->
-<div class="modal-backdrop" id="modalTutorBackdrop" onclick="tutorBackdropClick(event)">
-  <div class="modal">
-    <h3>Área do tutor</h3>
-    <p>Digite o <b>token</b> recebido por SMS para gerenciar o status do seu pet.</p>
-    <input id="tokenInput" placeholder="Ex: bb9qy6dwckorl4xe61gcvc" autocomplete="off" />
-    <div class="row">
-      <button class="button btn-cancel" onclick="fecharModalToken()">Cancelar</button>
-      <button class="button btn-go" onclick="irParaManage()">Continuar</button>
-    </div>
-    <div class="hint">Sem token? Peça um novo link via PetAlive.</div>
-  </div>
-</div>
-
-<!-- Modal Avisar PetAlive -->
+<!-- Modal Avisar -->
 <div class="modal-backdrop" id="modalAvisoBackdrop" onclick="avisoBackdropClick(event)">
   <div class="modal">
     <h3>Avisar a PetAlive</h3>
-    <p>Conte rapidamente onde e quando você viu o pet. A PetAlive intermedia o contato com o tutor.</p>
+    <p>Conte rapidamente onde e quando você viu o pet. Vamos intermediar o contato com o tutor.</p>
 
-    <input id="ondeViu" placeholder="Onde você viu? (ex: Rua X, perto do mercado)" />
+    <input id="ondeViu" placeholder="Onde você viu? (ex: Caxias, perto do mercado)" />
     <input id="quandoViu" style="margin-top:10px" placeholder="Quando? (ex: hoje 14h / ontem à noite)" />
-    <textarea id="obsViu" style="margin-top:10px" placeholder="Observações (corre atrás de carros, estava com coleira, etc)"></textarea>
+    <textarea id="obsViu" style="margin-top:10px" placeholder="Observações (coleira, comportamento, etc)"></textarea>
     <input id="whatsOpcional" style="margin-top:10px" placeholder="Seu WhatsApp (opcional)" />
 
     <div class="row">
       <button class="button btn-cancel" onclick="fecharModalAviso()">Cancelar</button>
-      <button onclick="enviarAviso()">Enviar aviso</button>
+      <button class="button btn-go" onclick="enviarAvisoWhats()">Enviar aviso</button>
     </div>
 
     <div class="hint">Não mostramos o contato do tutor para evitar golpes.</div>
@@ -234,6 +161,14 @@
         return;
       }
 
+      // salva global pro WhatsApp
+      window.__petAtual = {
+        petId: (pet.petId || "").trim(),
+        petNome: pet.petNome || "",
+        tipo: pet.tipo || "",
+        raca: pet.raca || ""
+      };
+
       const statusAtual = (pet.status && pet.status.trim()) ? pet.status.trim() : "Ativo";
       const foto = normalizarFotoUrl(pet.fotoUrl);
       const statusClass = statusAtual === "Perdido" ? "status perdido" : "status";
@@ -245,18 +180,8 @@
 
         <p class="${statusClass}">Status: ${statusAtual}</p>
 
-        <button class="button btn-alert" onclick='abrirModalAviso(${JSON.stringify({
-          petId: pet.petId,
-          petNome: pet.petNome || "",
-          tipo: pet.tipo || "",
-          raca: pet.raca || "",
-          status: statusAtual
-        }).replace(/'/g, "\\'")})'>
+        <button class="button btn-alert" onclick="abrirModalAviso()">
           Avisar a PetAlive
-        </button>
-
-        <button class="button btn-manage" onclick="abrirModalToken('${pet.petId}')">
-          Sou o tutor • Gerenciar status
         </button>
 
         <a class="button btn-home" href="https://petalive.vercel.app">
@@ -264,7 +189,8 @@
         </a>
       `;
     })
-    .catch(() => {
+    .catch((e) => {
+      console.log("Erro fetch:", e);
       document.getElementById("petCard").innerHTML = "<p>Erro ao carregar dados 😢</p>";
     });
 </script>
