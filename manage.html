@@ -33,6 +33,11 @@
       Enviar novo link por SMS
     </button>
 
+    <!-- NOVO: botão voltar -->
+    <button class="ghost" id="btnBack">
+      Voltar para a Comunidade
+    </button>
+
     <div class="msg" id="msg">Validando token...</div>
   </div>
 
@@ -64,6 +69,9 @@
     const btnLost = document.getElementById("btnLost");
     const btnActive = document.getElementById("btnActive");
     const btnResend = document.getElementById("btnResend");
+
+    // NOVO
+    const btnBack = document.getElementById("btnBack");
 
     elPid.textContent = petId ? `Pet ID: ${petId}` : "Pet ID não informado";
 
@@ -143,6 +151,11 @@
     btnLost.onclick = () => setStatus("Perdido");
     btnActive.onclick = () => setStatus("Ativo");
     btnResend.onclick = () => resend();
+
+    // NOVO
+    btnBack.onclick = () => {
+      window.location.href = "https://petalive.vercel.app/comunidade.html";
+    };
 
     validate();
   </script>
