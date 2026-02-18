@@ -48,7 +48,7 @@
     .btn-go{ background:#111; color:#fff; }
     .hint{ margin-top:10px; font-size:13px; color:#666; }
 
-    /* Novo: bloco de consentimento */
+    /* Consentimento localização */
     .consent-wrap{
       margin-top:10px; padding:10px; border:1px solid #eee; border-radius:10px; background:#fafafa;
       font-size:13px; color:#444;
@@ -76,7 +76,7 @@
       document.getElementById("obsViu").value = "";
       document.getElementById("whatsOpcional").value = "";
 
-      // Novo: reset consent/localização
+      // reset consent/localização
       document.getElementById("locConsent").checked = false;
       window.__geo = null;
       document.getElementById("locStatus").textContent = "Localização: não compartilhada.";
@@ -91,19 +91,21 @@
       if(e.target && e.target.id === "modalAvisoBackdrop") fecharModalAviso();
     }
 
-    // Novo: captura GPS somente com consentimento
+    // Captura GPS SOMENTE com consentimento (marcar checkbox)
     function obterLocalizacaoSeConsentiu(cb){
       const consentiu = document.getElementById("locConsent").checked;
 
-      // Se não consentiu, segue sem localização
       if(!consentiu){
         window.__geo = null;
+        document.getElementById("locStatus").textContent = "Localização: não compartilhada.";
         if (typeof cb === "function") cb();
         return;
       }
 
-      // Se já temos geo em cache (dentro desta sessão/modal), reaproveita
+      // já capturada nesta sessão do modal
       if(window.__geo && window.__geo.lat && window.__geo.lng){
+        document.getElementById("locStatus").textContent =
+          `Localização: capturada (precisão ~${window.__geo.acc || "?"}m).`;
         if (typeof cb === "function") cb();
         return;
       }
@@ -118,26 +120,29 @@
       }
 
       statusEl.textContent = "Localização: solicitando permissão...";
+
       navigator.geolocation.getCurrentPosition(
         (pos) => {
           const lat = pos.coords.latitude;
           const lng = pos.coords.longitude;
           const acc = Math.round(pos.coords.accuracy || 0);
+
           window.__geo = { lat, lng, acc };
           statusEl.textContent = `Localização: capturada (precisão ~${acc}m).`;
           if (typeof cb === "function") cb();
         },
         (err) => {
-          // Usuário negou ou deu erro -> segue sem localização (LGPD ok)
           window.__geo = null;
+
           let msg = "Localização: não autorizada.";
           if(err && err.code === 1) msg = "Localização: permissão negada.";
           if(err && err.code === 2) msg = "Localização: indisponível no momento.";
           if(err && err.code === 3) msg = "Localização: tempo esgotado.";
+
           statusEl.textContent = msg;
           if (typeof cb === "function") cb();
         },
-        { enableHighAccuracy: true, timeout: 8000, maximumAge: 0 }
+        { enableHighAccuracy: true, timeout: 15000, maximumAge: 0 }
       );
     }
 
@@ -158,10 +163,7 @@
         return;
       }
 
-      // Para reduzir chance de bloqueio de pop-up, abre uma aba em branco já.
-      const w = window.open("about:blank", "_blank");
-
-      // Agora tenta obter localização SOMENTE se a pessoa marcou consentimento.
+      // garante que se marcou, já tentou capturar (ou negou)
       obterLocalizacaoSeConsentiu(() => {
         const numeroPetAlive = "5521969876936"; // 55 + DDD + número
 
@@ -193,14 +195,10 @@ Link: ${location.href}
 
         const url = `https://wa.me/${numeroPetAlive}?text=${encodeURIComponent(msg)}`;
 
-        // Se a aba em branco abriu, navega nela; senão abre normal.
-        try{
-          if(w && !w.closed){
-            w.location.href = url;
-          }else{
-            window.open(url, "_blank");
-          }
-        }catch(e){
+        // Mobile: mais confiável usar location.href
+        try {
+          window.location.href = url;
+        } catch(e) {
           window.open(url, "_blank");
         }
 
@@ -249,10 +247,10 @@ Link: ${location.href}
     <textarea id="obsViu" style="margin-top:10px" placeholder="Observações (coleira, comportamento, etc)"></textarea>
     <input id="whatsOpcional" style="margin-top:10px" placeholder="Seu WhatsApp (opcional)" />
 
-    <!-- Novo: consentimento LGPD -->
+    <!-- Consentimento LGPD -->
     <div class="consent-wrap">
       <div class="consent-line">
-        <input type="checkbox" id="locConsent">
+        <input type="checkbox" id="locConsent" onchange="obterLocalizacaoSeConsentiu()">
         <div>
           <b>Compartilhar minha localização (opcional)</b><br>
           Ao marcar, você autoriza enviar sua localização GPS <u>apenas</u> neste aviso, para ajudar o tutor a encontrar o pet.
