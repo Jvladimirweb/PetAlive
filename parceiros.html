@@ -2,7 +2,7 @@
 <html lang="pt-BR">
 <head>
   <meta charset="UTF-8" />
-  <title>PetAlive • Parceiros</title>
+  <title>PetAlive • Parceiros e Planos</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
 
   <style>
@@ -45,6 +45,7 @@
       border-radius: 12px;
       padding: 18px;
       margin-top: 18px;
+      border: 1px solid #eef0f2;
     }
 
     .hero h2 {
@@ -58,6 +59,26 @@
       color: #555;
       line-height: 1.6;
       font-size: 15px;
+    }
+
+    .nav {
+      margin-top: 14px;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      justify-content: center;
+    }
+
+    .pill {
+      display: inline-block;
+      padding: 10px 12px;
+      border-radius: 999px;
+      border: 1px solid #e6e8ea;
+      background: #fff;
+      text-decoration: none;
+      color: #222;
+      font-weight: bold;
+      font-size: 13px;
     }
 
     .grid {
@@ -97,11 +118,24 @@
       padding: 0;
     }
 
+    .tag {
+      display: inline-block;
+      font-size: 12px;
+      padding: 6px 10px;
+      border-radius: 999px;
+      border: 1px solid #e6e8ea;
+      background: #f9fafb;
+      color: #222;
+      font-weight: bold;
+      margin-top: 10px;
+    }
+
     .steps {
       margin-top: 18px;
       background: #f9fafb;
       border-radius: 12px;
       padding: 16px;
+      border: 1px solid #eef0f2;
     }
 
     .steps h3 {
@@ -161,12 +195,24 @@
       text-decoration: none;
       border-radius: 10px;
       font-weight: bold;
+      margin: 6px 6px 0 6px;
+    }
+
+    .btn.secondary {
+      background: #111;
     }
 
     .small {
       font-size: 12px;
       color: #888;
       margin-top: 10px;
+      line-height: 1.5;
+    }
+
+    .divider {
+      height: 1px;
+      background: #eef0f2;
+      margin: 18px 0;
     }
 
     .footer {
@@ -183,17 +229,43 @@
       text-decoration: none;
       font-size: 14px;
     }
+
+    .note {
+      margin-top: 10px;
+      background: #f6f7f8;
+      border: 1px dashed #e3e5e7;
+      border-radius: 12px;
+      padding: 12px;
+      color: #555;
+      font-size: 13px;
+      line-height: 1.6;
+      text-align: left;
+    }
+
+    .accent {
+      font-weight: bold;
+      color: #222;
+    }
   </style>
 </head>
 
 <body>
   <div class="container">
     <div class="top">
-      <h1><img src="Imagem/logon.jpg"></h1>
+      <h1><img src="Imagem/logon.jpg" alt="PetAlive" /></h1>
       <p class="subtitle">
         Um QR Code na coleira que conecta quem encontrou o pet com o tutor em segundos.<br>
-        Sem app. Sem cadastro. Só escanear e falar.
+        Sem app. Sem cadastro para quem encontrou. Só escanear e falar.
       </p>
+
+      <div class="nav">
+        <a class="pill" href="#tutores">Para Tutores</a>
+        <a class="pill" href="#planos">Planos</a>
+        <a class="pill" href="#parceiros">Para Parceiros</a>
+        <a class="pill" href="#como-funciona">Como funciona</a>
+        <a class="pill" href="#faq">Dúvidas</a>
+      </div>
+
       <a class="back" href="index.html">← Voltar para Home</a>
     </div>
 
@@ -202,23 +274,139 @@
       <p>
         Pets se perdem. Quem encontra quer ajudar, mas não sabe como localizar o tutor.
         Postar em rede social demora, cartaz dá trabalho e o tempo é decisivo.
+        O PetAlive foi feito para reduzir o tempo de reencontro com um fluxo simples e seguro.
+      </p>
+    </div>
+
+    <!-- =========================
+         PARA TUTORES
+    ========================== -->
+    <div id="tutores" class="divider"></div>
+
+    <div class="hero">
+      <h2>Para Tutores (Famílias)</h2>
+      <p>
+        Seu pet com <span class="accent">identidade digital</span> e um QR Code na coleira para contato rápido.
+        Em caso de perda, quem encontrar acessa o perfil e fala com você em segundos.
+      </p>
+
+      <div class="note">
+        <div class="accent">🎉 Promoção de Lançamento (100 primeiros)</div>
+        <div>
+          Os <span class="accent">100 primeiros</span> que aderirem ao projeto <span class="accent">PetsLives / PetAlive</span>
+          pagam <span class="accent">apenas a Tag (QR Code)</span> e ganham <span class="accent">4 meses</span> de acesso sem mensalidade.<br>
+          Após 4 meses, o acesso passa automaticamente para o <span class="accent">Plano Básico</span> (assinatura recorrente).
+        </div>
+        <div class="small" style="margin-top:8px;">
+          * Válido enquanto houver vagas na promoção. Para ativar a migração automática, será necessário autorizar/registrar uma forma de pagamento no momento da ativação do plano.
+        </div>
+      </div>
+    </div>
+
+    <div class="grid">
+      <div class="card">
+        <h3>✅ O que você recebe</h3>
+        <ul>
+          <li>Perfil digital do pet (link único)</li>
+          <li>QR Code exclusivo para tag/coleira</li>
+          <li>Status (Ativo / Perdido)</li>
+          <li>Intermediação de contato (mais segurança)</li>
+          <li>Atualização segura via token</li>
+        </ul>
+        <span class="tag">Sem app para quem encontrou</span>
+      </div>
+
+      <div class="card">
+        <h3>🛡 Por que é mais seguro</h3>
+        <ul>
+          <li>QR Code não exibe dados sensíveis diretamente</li>
+          <li>Contato pode ser intermediado pela PetAlive</li>
+          <li>Controle de status com token</li>
+          <li>Menos exposição em redes sociais</li>
+        </ul>
+        <span class="tag">Pensado para o mundo real</span>
+      </div>
+    </div>
+
+    <div class="cta">
+      <h3>Quero garantir minha Tag (e entrar na Promoção)</h3>
+      <p>
+        Me chama no WhatsApp com o nome do seu pet e seu bairro. Eu te explico em 2 minutos e já iniciamos o cadastro.
+      </p>
+
+      <a class="btn"
+         href="https://wa.me/5521969876936?text=Ol%C3%A1!%20Quero%20garantir%20a%20Promo%C3%A7%C3%A3o%20de%20Lan%C3%A7amento%20(PetAlive/PetsLives)%20para%20meu%20pet.%20Nome%20do%20pet%3A%20____%20%7C%20Bairro%3A%20Higien%C3%B3polis."
+         target="_blank">
+        Quero minha Tag
+      </a>
+
+      <div class="small">
+        Dica: coloque também raça/cor/foto para agilizar o cadastro.
+      </div>
+    </div>
+
+    <!-- =========================
+         PLANOS
+    ========================== -->
+    <div id="planos" class="divider"></div>
+
+    <div class="hero">
+      <h2>Planos PetAlive (para tutores)</h2>
+      <p>
+        Comece com o essencial e evolua conforme sua necessidade. O foco é: <span class="accent">proteção + praticidade</span>.
       </p>
     </div>
 
     <div class="grid">
       <div class="card">
-        <h3>✅ O que é o PetAlive</h3>
-        <p>
-          Um perfil digital do pet acessado por QR Code.
-          Ao escanear, a pessoa vê a foto e as informações básicas e pode falar com o tutor na hora.
-        </p>
+        <h3>🟦 Plano Básico</h3>
+        <p><strong>Ideal para:</strong> quem quer identificação + contato rápido.</p>
         <ul>
-          <li>Página do pet (link único)</li>
-          <li>Botão de contato direto (WhatsApp)</li>
-          <li>Status (Ativo / Perdido)</li>
+          <li>Perfil do pet + QR Code</li>
+          <li>Status (Ativo/Perdido)</li>
+          <li>Contato rápido</li>
+          <li>Atualização via token</li>
         </ul>
+        <span class="tag">Recorrente após a promoção</span>
       </div>
 
+      <div class="card">
+        <h3>🟪 Plano Premium</h3>
+        <p><strong>Ideal para:</strong> quem quer proteção + saúde organizada.</p>
+        <ul>
+          <li>Tudo do Básico</li>
+          <li>Histórico do pet (vacinas, castração etc.)</li>
+          <li>Contato extra (família/cuidador)</li>
+          <li>Prioridade na intermediação</li>
+        </ul>
+        <span class="tag">Mais tranquilidade no dia a dia</span>
+      </div>
+    </div>
+
+    <div class="note">
+      <div class="accent">Em breve (visão de evolução)</div>
+      <div>
+        Microchip (número cadastrado), alertas de vacina e recursos de comunidade por bairro/região.
+      </div>
+      <div class="small" style="margin-top:8px;">
+        * Esses itens podem entrar gradualmente. A prioridade é manter o sistema simples, seguro e funcionando bem.
+      </div>
+    </div>
+
+    <!-- =========================
+         PARA PARCEIROS
+    ========================== -->
+    <div id="parceiros" class="divider"></div>
+
+    <div class="hero">
+      <h2>Para Parceiros (Clínicas, Pet Shops e Negócios Pet)</h2>
+      <p>
+        O PetAlive vira um <span class="accent">diferencial</span> para seu negócio: mais confiança, mais fidelização e uma solução simples de explicar.
+        Você pode oferecer a Tag + ativação e ganhar comissões ou operar por pacote.
+      </p>
+    </div>
+
+    <div class="grid">
       <div class="card">
         <h3>🏪 Para quem é</h3>
         <p>
@@ -233,25 +421,65 @@
       </div>
 
       <div class="card">
-        <h3>💡 Benefícios para o parceiro</h3>
+        <h3>💡 O que oferecer ao parceiro</h3>
         <ul>
-          <li>Serviço de valor agregado (vira “motivo para voltar”)</li>
-          <li>Venda de tags/plaquinhas com QR</li>
-          <li>Parceria com comissão ou pacote mensal</li>
-          <li>Possibilidade de kit personalizado com sua marca</li>
+          <li><strong>Produto pronto</strong>: Tag + ativação simples</li>
+          <li><strong>Selo “Parceiro PetAlive”</strong> (confiança)</li>
+          <li><strong>Kit com sua marca</strong> (opcional)</li>
+          <li><strong>Piloto</strong> com poucos clientes (sem risco)</li>
         </ul>
       </div>
 
       <div class="card">
-        <h3>📌 Benefícios para o tutor</h3>
+        <h3>💰 Como o parceiro ganha</h3>
         <ul>
-          <li>Menos tempo de pet perdido</li>
-          <li>Contato rápido com quem encontrou</li>
-          <li>Uma identidade digital sempre disponível</li>
-          <li>Mais tranquilidade no dia a dia</li>
+          <li>Comissão por tag/ativação</li>
+          <li>Percentual sobre assinaturas (quando aplicável)</li>
+          <li>Mais retorno (cliente volta para atualizar / vacinas)</li>
+          <li>Percepção de cuidado premium</li>
         </ul>
+        <span class="tag">Receita + fidelização</span>
+      </div>
+
+      <div class="card">
+        <h3>📌 O que a PetAlive ganha</h3>
+        <ul>
+          <li>Canal de aquisição local (boca a boca)</li>
+          <li>Prova social no bairro/região</li>
+          <li>Rede de apoio para reencontros</li>
+          <li>Base para crescer com qualidade</li>
+        </ul>
+        <span class="tag">Crescimento sustentável</span>
       </div>
     </div>
+
+    <div class="cta">
+      <h3>Quer virar parceiro fundador?</h3>
+      <p>
+        Eu te mostro em 2 minutos e montamos um piloto com alguns clientes seus (simples e sem complicação).
+      </p>
+
+      <a class="btn"
+         href="https://wa.me/5521969876936?text=Ol%C3%A1!%20Quero%20entender%20a%20parceria%20com%20a%20PetAlive%20e%20ser%20um%20parceiro%20fundador.%20Meu%20neg%C3%B3cio%20%C3%A9%3A%20____%20%7C%20Bairro%3A%20____."
+         target="_blank">
+        Falar no WhatsApp (Parceria)
+      </a>
+
+      <a class="btn secondary"
+         href="https://wa.me/5521969876936?text=Ol%C3%A1!%20Tenho%20uma%20cl%C3%ADnica/pet%20shop%20e%20quero%20um%20piloto%20com%20a%20PetAlive.%20Pode%20me%20enviar%20os%20modelos%20de%20comiss%C3%A3o%20e%20condi%C3%A7%C3%B5es%3F"
+         target="_blank">
+        Quero um Piloto
+      </a>
+
+      <div class="small">
+        (Dica: personalize a mensagem com o nome do pet shop/clínica e sua região.)
+      </div>
+    </div>
+
+    <!-- =========================
+         COMO FUNCIONA
+    ========================== -->
+    <div id="como-funciona" class="divider"></div>
 
     <div class="steps">
       <h3>Como funciona (em 3 passos)</h3>
@@ -281,21 +509,44 @@
       </div>
     </div>
 
-    <div class="cta">
-      <h3>Quer testar um piloto no seu negócio?</h3>
-      <p>
-        Eu te mostro o funcionamento em 2 minutos e montamos um piloto com alguns clientes seus.
-      </p>
+    <!-- =========================
+         FAQ
+    ========================== -->
+    <div id="faq" class="divider"></div>
 
-      <!-- Troque o número abaixo pelo seu WhatsApp (DDD+numero), sem espaços e sem + -->
-      <a class="btn"
-         href="https://wa.me/5521969876936?text=Ol%C3%A1!%20Quero%20entender%20como%20funciona%20a%20parceria%20com%20o%20PetAlive."
-         target="_blank">
-        Falar no WhatsApp
-      </a>
+    <div class="hero">
+      <h2>Dúvidas rápidas</h2>
+      <p>Respostas diretas para facilitar.</p>
+    </div>
 
-      <div class="small">
-        (Dica: personalize a mensagem do WhatsApp com o nome do seu pet shop/clínica)
+    <div class="grid">
+      <div class="card">
+        <h3>Precisa instalar app?</h3>
+        <p>
+          Não. Quem encontra só escaneia o QR Code. O tutor também pode gerenciar via link e token (sem complicação).
+        </p>
+      </div>
+
+      <div class="card">
+        <h3>Meus dados ficam expostos?</h3>
+        <p>
+          O objetivo é reduzir exposição. O contato pode ser intermediado e o QR não “joga” dados sensíveis abertamente.
+        </p>
+      </div>
+
+      <div class="card">
+        <h3>Como funciona a promoção dos 100 primeiros?</h3>
+        <p>
+          Você paga apenas a Tag e tem 4 meses sem mensalidade. Depois, entra no Plano Básico automaticamente.
+          Para isso, você autoriza uma forma de pagamento na ativação.
+        </p>
+      </div>
+
+      <div class="card">
+        <h3>Sou clínica/pet shop: como começo?</h3>
+        <p>
+          Fazemos um piloto com poucos clientes, validamos e depois você decide se prefere comissão por venda ou pacote.
+        </p>
       </div>
     </div>
 
