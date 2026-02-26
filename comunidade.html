@@ -87,8 +87,6 @@
 
 <script>
   // === CONFIG ===
-  // ✅ Troque pela URL do seu webhook n8n que lista os pets (com dados públicos)
-  // Exemplo: https://SEU-DOMINIO-OU-NGROK/webhook/community
   const API_URL = "COLE_AQUI_SUA_URL_DO_WEBHOOK_COMMUNITY";
 
   const grid = document.getElementById("grid");
@@ -103,20 +101,10 @@
   btnHome.onclick = () => location.href = "https://petalive.vercel.app/";
 
   let allPets = [];
-  let filtro = "TODOS"; // TODOS | PERDIDOS | ATIVOS
+  let filtro = "TODOS";
 
   function normalize(s){ return (s || "").toString().trim(); }
   function lower(s){ return normalize(s).toLowerCase(); }
-
-  function normalizarFotoUrl(fotoUrl) {
-    const u = normalize(fotoUrl);
-    if (!u) return "";
-    if (u.includes("thumbnail?id=")) return u + (u.includes("&sz=") ? "" : "&sz=w800");
-    if (u.includes("uc?export=view&id=")) {
-      return u.replace("uc?export=view&id=", "thumbnail?id=") + "&sz=w800";
-    }
-    return u;
-  }
 
   function statusNorm(p){
     const s = normalize(p.status);
@@ -134,7 +122,6 @@
     const query = lower(q.value);
     let out = pets.slice();
 
-    // filtro status
     out = out.filter(p => {
       const st = statusNorm(p);
       if (filtro === "PERDIDOS") return st === "Perdido";
@@ -142,24 +129,26 @@
       return true;
     });
 
-    // busca
     if (query) {
       out = out.filter(p => {
         const hay = [
-          p.petId, p.petNome, p.tipo, p.raca, p.status
+          p.pet_id,
+          p.pet_nome,
+          p.tipo,
+          p.raca,
+          p.status
         ].map(lower).join(" ");
         return hay.includes(query);
       });
     }
 
-    // ordena: Perdido primeiro, depois por dataCadastro desc (se tiver)
     out.sort((a,b) => {
       const sa = statusNorm(a) === "Perdido" ? 0 : 1;
       const sb = statusNorm(b) === "Perdido" ? 0 : 1;
       if (sa !== sb) return sa - sb;
 
-      const da = Date.parse(a.dataCadastro || "") || 0;
-      const db = Date.parse(b.dataCadastro || "") || 0;
+      const da = Date.parse(a.data_cadastro || "") || 0;
+      const db = Date.parse(b.data_cadastro || "") || 0;
       return db - da;
     });
 
@@ -181,14 +170,15 @@
     grid.innerHTML = "";
 
     list.forEach(p => {
-      const petId = normalize(p.petId);
-      const nome = normalize(p.petNome) || "-";
+      const petId = normalize(p.pet_id);
+      const nome = normalize(p.pet_nome) || "-";
       const tipo = normalize(p.tipo) || "-";
       const raca = normalize(p.raca) || "-";
       const st = statusNorm(p);
-      const foto = normalizarFotoUrl(p.fotoUrl);
+      const foto = normalize(p.foto_url);
 
       const pillClass = st === "Perdido" ? "pill lost" : "pill active";
+
       const card = document.createElement("div");
       card.className = "card";
       card.onclick = () => {
@@ -205,6 +195,7 @@
           ${petId ? `<span class="pill">${petId}</span>` : ""}
         </div>
       `;
+
       grid.appendChild(card);
     });
   }
@@ -215,30 +206,11 @@
 
   q.addEventListener("input", () => render(allPets));
 
-  function mapFromSupabase(row) {
-    // Mapeia possíveis nomes vindos do Supabase/Backend para o formato que o front já espera
-    return {
-      petId: row.pet_id ?? row.petId ?? row.id ?? "",
-      petNome: row.nome ?? row.pet_nome ?? row.petNome ?? "",
-      tipo: row.tipo ?? "",
-      raca: row.raca ?? "",
-      status: row.status ?? "Ativo",
-      fotoUrl: row.foto_url ?? row.fotoUrl ?? row.foto ?? "",
-      dataCadastro: row.created_at ?? row.data_cadastro ?? row.dataCadastro ?? ""
-    };
-  }
-
-  fetch(API_URL, { method: "GET" })
-    .then(r => {
-      if (!r.ok) throw new Error("HTTP " + r.status);
-      return r.json();
-    })
+  fetch(API_URL)
+    .then(r => r.json())
     .then(data => {
-      // aceita: array direto OU objeto {data:[...]} (dependendo do seu webhook)
-      const rows = Array.isArray(data) ? data : (Array.isArray(data.data) ? data.data : []);
-      allPets = rows.map(mapFromSupabase);
-
-      allPets = allPets.filter(p => normalize(p.petId));
+      allPets = Array.isArray(data) ? data : (data.data || []);
+      allPets = allPets.filter(p => normalize(p.pet_id));
       state.textContent = `Pets carregados: ${allPets.length}`;
       render(allPets);
     })
