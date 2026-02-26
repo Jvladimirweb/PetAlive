@@ -58,10 +58,8 @@
     }
     .small { font-size:12px; color:#666; margin-top:6px; }
 
-            @media (min-width: 768px){
-        .imgBox{
-            height:300px;   /* menor no desktop */
-        }
+    @media (min-width: 768px){
+      .imgBox{ height:300px; }
     }
   </style>
 </head>
@@ -89,9 +87,9 @@
 
 <script>
   // === CONFIG ===
-  const SHEET_ID = "1kK-zkAkyYEyF4DCmd73KU-RWtSZuNiNXD3EI1eFr-7c";
-  const SHEET_NAME = "Página1";
-  const DATA_URL = `https://opensheet.elk.sh/${SHEET_ID}/${encodeURIComponent(SHEET_NAME)}`;
+  // ✅ Troque pela URL do seu webhook n8n que lista os pets (com dados públicos)
+  // Exemplo: https://SEU-DOMINIO-OU-NGROK/webhook/community
+  const API_URL = "COLE_AQUI_SUA_URL_DO_WEBHOOK_COMMUNITY";
 
   const grid = document.getElementById("grid");
   const state = document.getElementById("state");
@@ -217,12 +215,29 @@
 
   q.addEventListener("input", () => render(allPets));
 
-  fetch(DATA_URL)
-    .then(r => r.json())
+  function mapFromSupabase(row) {
+    // Mapeia possíveis nomes vindos do Supabase/Backend para o formato que o front já espera
+    return {
+      petId: row.pet_id ?? row.petId ?? row.id ?? "",
+      petNome: row.nome ?? row.pet_nome ?? row.petNome ?? "",
+      tipo: row.tipo ?? "",
+      raca: row.raca ?? "",
+      status: row.status ?? "Ativo",
+      fotoUrl: row.foto_url ?? row.fotoUrl ?? row.foto ?? "",
+      dataCadastro: row.created_at ?? row.data_cadastro ?? row.dataCadastro ?? ""
+    };
+  }
+
+  fetch(API_URL, { method: "GET" })
+    .then(r => {
+      if (!r.ok) throw new Error("HTTP " + r.status);
+      return r.json();
+    })
     .then(data => {
-      // garante formato
-      allPets = Array.isArray(data) ? data : [];
-      // remove linhas sem petId (se tiver)
+      // aceita: array direto OU objeto {data:[...]} (dependendo do seu webhook)
+      const rows = Array.isArray(data) ? data : (Array.isArray(data.data) ? data.data : []);
+      allPets = rows.map(mapFromSupabase);
+
       allPets = allPets.filter(p => normalize(p.petId));
       state.textContent = `Pets carregados: ${allPets.length}`;
       render(allPets);
