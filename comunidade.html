@@ -88,12 +88,6 @@
 <script>
   // === CONFIG ===
 
-  console.log("API:", API_URL);
-  fetch(API_URL)
-  .then(r => { console.log("status", r.status); return r.text(); })
-  .then(t => { console.log("body", t.slice(0,200)); })
-  .catch(e => console.log("fetch error", e));
-  
   const API_URL = "https://a769-2804-14d-5c77-8c5b-4c3f-56dd-6059-3b09.ngrok-free.app/webhook/community";
 
   const grid = document.getElementById("grid");
