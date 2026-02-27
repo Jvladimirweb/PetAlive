@@ -88,8 +88,8 @@
 <script>
   // === CONFIG ===
 
-  console.log("API:", N8N_WEBHOOK_URL);
-  fetch(N8N_WEBHOOK_URL)
+  console.log("API:", API_URL);
+  fetch(API_URL)
   .then(r => { console.log("status", r.status); return r.text(); })
   .then(t => { console.log("body", t.slice(0,200)); })
   .catch(e => console.log("fetch error", e));
