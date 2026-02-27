@@ -93,26 +93,14 @@
   const grid = document.getElementById("grid");
   const state = document.getElementById("state");
 
-  fetch(API_URL, { headers: { "Accept": "application/json" } })
-    .then(async (r) => {
-      const text = await r.text();
-      console.log("STATUS:", r.status);
-      console.log("CONTENT-TYPE:", r.headers.get("content-type"));
-      console.log("BODY (primeiros 200):", text.slice(0, 200));
-      // tenta JSON só se parecer JSON
-      if (!text.trim().startsWith("[") && !text.trim().startsWith("{")) {
-        throw new Error("Resposta não é JSON. Veja o console (BODY).");
-      }
-      return JSON.parse(text);
-    })
-    .then(data => {
-      console.log("DATA OK:", data);
-      // ... segue seu fluxo normal aqui
-    })
-    .catch(err => {
-      console.error("ERRO FETCH:", err);
-      state.textContent = "Erro ao carregar a comunidade 😢";
-    });
+  fetch(API_URL, {
+    method: "GET",
+    headers: {
+      "Accept": "application/json",
+      "ngrok-skip-browser-warning": "true"
+    }
+  })
+  
   const q = document.getElementById("q");
 
   const fTodos = document.getElementById("fTodos");
