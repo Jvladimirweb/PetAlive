@@ -102,7 +102,24 @@
 
   let allPets = [];
   let filtro = "TODOS";
-
+  
+  function normalizarFotoUrl(fotoUrl) {
+    const u = normalize(fotoUrl);
+    if (!u) return "";
+  
+    // Google Drive - converte para thumbnail (carrega melhor em <img>)
+    if (u.includes("drive.google.com/uc?") && u.includes("id=")) {
+      const id = (u.match(/[?&]id=([^&]+)/) || [])[1];
+      if (id) return `https://drive.google.com/thumbnail?id=${id}&sz=w800`;
+    }
+  
+    if (u.includes("thumbnail?id=")) {
+      return u + (u.includes("&sz=") ? "" : "&sz=w800");
+    }
+  
+    // Se já for URL normal, retorna como está
+    return u;
+  }
   function normalize(s){ return (s || "").toString().trim(); }
   function lower(s){ return normalize(s).toLowerCase(); }
 
@@ -169,7 +186,7 @@
       const tipo = normalize(p.tipo) || "-";
       const raca = normalize(p.raca) || "-";
       const st = statusNorm(p);
-      const foto = normalize(p.foto_url);
+      const foto = normalizarFotoUrl(p.foto_url);
 
       const pillClass = st === "Perdido" ? "pill lost" : "pill active";
 
@@ -181,7 +198,7 @@
       };
 
       card.innerHTML = `
-        <div class="imgBox">${foto ? `<img src="${foto}" alt="Foto do pet">` : "Sem foto"}</div>
+        <div class="imgBox">${foto ? `<img src="${foto}" alt="Foto do pet" onerror="this.onerror=null; this.style.display='none'; this.parentElement.textContent='Sem foto';">`"}</div>
         <p class="name">${nome}</p>
         <p class="meta">${tipo} • ${raca}</p>
         <div class="pillRow">
