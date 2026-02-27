@@ -93,7 +93,7 @@
   const grid = document.getElementById("grid");
   const state = document.getElementById("state");
 
-  fetch(API_URL)
+  fetch(API_URL, { headers: { "Accept": "application/json" } })
     .then(async (r) => {
       const text = await r.text();
       console.log("STATUS:", r.status);
