@@ -87,31 +87,32 @@
 
 <script>
   // === CONFIG ===
-  fetch(API_URL)
-    .then(async (r) => {
-    const text = await r.text();
-    console.log("STATUS:", r.status);
-    console.log("CONTENT-TYPE:", r.headers.get("content-type"));
-    console.log("BODY (primeiros 200):", text.slice(0, 200));
-    // tenta JSON só se parecer JSON
-    if (!text.trim().startsWith("[") && !text.trim().startsWith("{")) {
-      throw new Error("Resposta não é JSON. Veja o console (BODY).");
-    }
-    return JSON.parse(text);
-  })
-  .then(data => {
-    console.log("DATA OK:", data);
-    // ... segue seu fluxo normal aqui
-  })
-  .catch(err => {
-    console.error("ERRO FETCH:", err);
-    state.textContent = "Erro ao carregar a comunidade 😢";
-  });
 
   const API_URL = "https://a769-2804-14d-5c77-8c5b-4c3f-56dd-6059-3b09.ngrok-free.app/webhook/community";
 
   const grid = document.getElementById("grid");
   const state = document.getElementById("state");
+
+  fetch(API_URL)
+    .then(async (r) => {
+      const text = await r.text();
+      console.log("STATUS:", r.status);
+      console.log("CONTENT-TYPE:", r.headers.get("content-type"));
+      console.log("BODY (primeiros 200):", text.slice(0, 200));
+      // tenta JSON só se parecer JSON
+      if (!text.trim().startsWith("[") && !text.trim().startsWith("{")) {
+        throw new Error("Resposta não é JSON. Veja o console (BODY).");
+      }
+      return JSON.parse(text);
+    })
+    .then(data => {
+      console.log("DATA OK:", data);
+      // ... segue seu fluxo normal aqui
+    })
+    .catch(err => {
+      console.error("ERRO FETCH:", err);
+      state.textContent = "Erro ao carregar a comunidade 😢";
+    });
   const q = document.getElementById("q");
 
   const fTodos = document.getElementById("fTodos");
