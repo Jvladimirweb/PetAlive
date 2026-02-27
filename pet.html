@@ -59,14 +59,25 @@
   </style>
 
   <script>
-    // helper: garante link de imagem direto
+    function normalize(s){ return (s || "").toString().trim(); }
+
+    // helper: garante link de imagem direto (Google Drive)
     function normalizarFotoUrl(fotoUrl) {
-      if (!fotoUrl) return "";
-      if (fotoUrl.includes("thumbnail?id=")) return fotoUrl;
-      if (fotoUrl.includes("uc?export=view&id=")) {
-        return fotoUrl.replace("uc?export=view&id=", "thumbnail?id=") + "&sz=w800";
+      const u = normalize(fotoUrl);
+      if (!u) return "";
+
+      if (u.includes("drive.google.com/uc?") && u.includes("id=")) {
+        const id = (u.match(/[?&]id=([^&]+)/) || [])[1];
+        if (id) return `https://drive.google.com/thumbnail?id=${id}&sz=w800`;
       }
-      return fotoUrl;
+
+      if (u.includes("thumbnail?id=")) return u + (u.includes("&sz=") ? "" : "&sz=w800");
+
+      if (u.includes("uc?export=view&id=")) {
+        return u.replace("uc?export=view&id=", "thumbnail?id=") + "&sz=w800";
+      }
+
+      return u;
     }
 
     // ===== Avisar PetAlive (WhatsApp) =====
@@ -76,7 +87,6 @@
       document.getElementById("obsViu").value = "";
       document.getElementById("whatsOpcional").value = "";
 
-      // reset consent/localização
       document.getElementById("locConsent").checked = false;
       window.__geo = null;
       document.getElementById("locStatus").textContent = "Localização: não compartilhada.";
@@ -91,7 +101,6 @@
       if(e.target && e.target.id === "modalAvisoBackdrop") fecharModalAviso();
     }
 
-    // Captura GPS SOMENTE com consentimento (marcar checkbox)
     function obterLocalizacaoSeConsentiu(cb){
       const consentiu = document.getElementById("locConsent").checked;
 
@@ -102,7 +111,6 @@
         return;
       }
 
-      // já capturada nesta sessão do modal
       if(window.__geo && window.__geo.lat && window.__geo.lng){
         document.getElementById("locStatus").textContent =
           `Localização: capturada (precisão ~${window.__geo.acc || "?"}m).`;
@@ -163,7 +171,6 @@
         return;
       }
 
-      // garante que se marcou, já tentou capturar (ou negou)
       obterLocalizacaoSeConsentiu(() => {
         const numeroPetAlive = "5521969876936"; // 55 + DDD + número
 
@@ -195,12 +202,8 @@ Link: ${location.href}
 
         const url = `https://wa.me/${numeroPetAlive}?text=${encodeURIComponent(msg)}`;
 
-        // Mobile: mais confiável usar location.href
-        try {
-          window.location.href = url;
-        } catch(e) {
-          window.open(url, "_blank");
-        }
+        try { window.location.href = url; }
+        catch(e) { window.open(url, "_blank"); }
 
         fecharModalAviso();
       });
@@ -247,7 +250,6 @@ Link: ${location.href}
     <textarea id="obsViu" style="margin-top:10px" placeholder="Observações (coleira, comportamento, etc)"></textarea>
     <input id="whatsOpcional" style="margin-top:10px" placeholder="Seu WhatsApp (opcional)" />
 
-    <!-- Consentimento LGPD -->
     <div class="consent-wrap">
       <div class="consent-line">
         <input type="checkbox" id="locConsent" onchange="obterLocalizacaoSeConsentiu()">
@@ -289,28 +291,49 @@ Link: ${location.href}
   const params = new URLSearchParams(window.location.search);
   const petIdParam = (params.get("id") || "").trim();
 
-  const SHEET_ID = "1kK-zkAkyYEyF4DCmd73KU-RWtSZuNiNXD3EI1eFr-7c";
-  const SHEET_NAME = "Página1";
-  const url = `https://opensheet.elk.sh/${SHEET_ID}/${SHEET_NAME}`;
+  // 👉 Troque para o seu endpoint do n8n que busca 1 pet
+  const N8N_GET_PET_URL = "https://a769-2804-14d-5c77-8c5b-4c3f-56dd-6059-3b09.ngrok-free.app/webhook/pet-get";
 
-  fetch(url)
-    .then(res => res.json())
-    .then(data => {
-      const pet = data.find(p => (p.petId || "").trim() === petIdParam);
+  async function carregarPet(){
+    if(!petIdParam){
+      document.getElementById("petCard").innerHTML = "<p>Pet não encontrado 😢</p>";
+      return;
+    }
 
-      if (!pet) {
+    try{
+      const r = await fetch(`${N8N_GET_PET_URL}?id=${encodeURIComponent(petIdParam)}`, {
+        method: "GET",
+        headers: {
+          "Accept": "application/json",
+          "ngrok-skip-browser-warning": "true"
+        }
+      });
+
+      const text = await r.text();
+      if(!r.ok) throw new Error(`HTTP ${r.status}: ${text.slice(0,200)}`);
+
+      const t = text.trim();
+      if(t.startsWith("<!DOCTYPE") || t.startsWith("<html")) {
+        throw new Error("Endpoint respondeu HTML (ngrok warning).");
+      }
+
+      const data = JSON.parse(text);
+
+      // n8n pode devolver array ou objeto
+      const pet = Array.isArray(data) ? data[0] : data;
+
+      if (!pet || !normalize(pet.pet_id)) {
         document.getElementById("petCard").innerHTML = "<p>Pet não encontrado 😢</p>";
         return;
       }
 
-      const statusAtual = (pet.status && pet.status.trim()) ? pet.status.trim() : "Ativo";
-      const foto = normalizarFotoUrl(pet.fotoUrl);
+      const statusAtual = normalize(pet.status) || "Ativo";
+      const foto = normalizarFotoUrl(pet.foto_url);
       const statusClass = statusAtual === "Perdido" ? "status perdido" : "status";
 
-      // global pro WhatsApp + tutor
       window.__petAtual = {
-        petId: (pet.petId || "").trim(),
-        petNome: pet.petNome || "",
+        petId: normalize(pet.pet_id),
+        petNome: pet.pet_nome || "",
         tipo: pet.tipo || "",
         raca: pet.raca || "",
         status: statusAtual
@@ -318,28 +341,23 @@ Link: ${location.href}
 
       document.getElementById("petCard").innerHTML = `
         ${foto ? `<img class="pet" src="${foto}" alt="Foto do pet">` : ""}
-        <h2>${pet.petNome || "-"}</h2>
+        <h2>${pet.pet_nome || "-"}</h2>
         <p>${pet.tipo || "-"} • ${pet.raca || "-"}</p>
 
         <p class="${statusClass}">Status: ${statusAtual}</p>
 
-        <button class="button btn-alert" onclick="abrirModalAviso()">
-          Avisar a PetAlive
-        </button>
+        <button class="button btn-alert" onclick="abrirModalAviso()">Avisar a PetAlive</button>
+        <button class="button btn-tutor" onclick="abrirModalTutor()">Sou o tutor • Gerenciar status</button>
 
-        <button class="button btn-tutor" onclick="abrirModalTutor()">
-          Sou o tutor • Gerenciar status
-        </button>
-
-        <a class="button btn-home" href="https://petalive.vercel.app">
-          Voltar para a Home
-        </a>
+        <a class="button btn-home" href="https://petalive.vercel.app">Voltar para a Home</a>
       `;
-    })
-    .catch((e) => {
+    } catch(e){
       console.log("Erro fetch:", e);
       document.getElementById("petCard").innerHTML = "<p>Erro ao carregar dados 😢</p>";
-    });
+    }
+  }
+
+  carregarPet();
 </script>
 
 </body>
