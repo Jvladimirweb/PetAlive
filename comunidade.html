@@ -87,20 +87,10 @@
 
 <script>
   // === CONFIG ===
-
   const API_URL = "https://a769-2804-14d-5c77-8c5b-4c3f-56dd-6059-3b09.ngrok-free.app/webhook/community";
 
   const grid = document.getElementById("grid");
   const state = document.getElementById("state");
-
-  fetch(API_URL, {
-    method: "GET",
-    headers: {
-      "Accept": "application/json",
-      "ngrok-skip-browser-warning": "true"
-    }
-  })
-  
   const q = document.getElementById("q");
 
   const fTodos = document.getElementById("fTodos");
@@ -141,13 +131,7 @@
 
     if (query) {
       out = out.filter(p => {
-        const hay = [
-          p.pet_id,
-          p.pet_nome,
-          p.tipo,
-          p.raca,
-          p.status
-        ].map(lower).join(" ");
+        const hay = [p.pet_id, p.pet_nome, p.tipo, p.raca, p.status].map(lower).join(" ");
         return hay.includes(query);
       });
     }
@@ -205,7 +189,6 @@
           ${petId ? `<span class="pill">${petId}</span>` : ""}
         </div>
       `;
-
       grid.appendChild(card);
     });
   }
@@ -216,21 +199,47 @@
 
   q.addEventListener("input", () => render(allPets));
 
-  fetch(API_URL)
-    .then(r => r.json())
-    .then(data => {
-      allPets = Array.isArray(data) ? data : (data.data || []);
+  async function loadCommunity() {
+    state.style.display = "block";
+    state.textContent = "Carregando pets...";
+
+    try {
+      const r = await fetch(API_URL, {
+        method: "GET",
+        headers: {
+          "Accept": "application/json",
+          "ngrok-skip-browser-warning": "true"
+        }
+      });
+
+      const text = await r.text();
+
+      if (!r.ok) throw new Error(`HTTP ${r.status}: ${text.slice(0,200)}`);
+
+      // se vier HTML, aborta com msg amigável
+      const t = text.trim();
+      if (t.startsWith("<!DOCTYPE") || t.startsWith("<html")) {
+        throw new Error("Endpoint respondeu HTML (provável ngrok warning).");
+      }
+
+      const data = JSON.parse(text);
+
+      // n8n pode devolver array direto
+      allPets = Array.isArray(data) ? data : (Array.isArray(data.data) ? data.data : []);
       allPets = allPets.filter(p => normalize(p.pet_id));
+
       state.textContent = `Pets carregados: ${allPets.length}`;
       render(allPets);
-    })
-    .catch(err => {
+
+    } catch (err) {
       console.log(err);
       grid.style.display = "none";
       state.style.display = "block";
       state.textContent = "Erro ao carregar a comunidade 😢";
-    });
+    }
+  }
 
+  loadCommunity();
 </script>
 </body>
 </html>
