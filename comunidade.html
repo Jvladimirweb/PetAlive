@@ -198,7 +198,9 @@
       };
 
       card.innerHTML = `
-        <div class="imgBox">${foto ? `<img src="${foto}" alt="Foto do pet" onerror="this.onerror=null; this.style.display='none'; this.parentElement.textContent='Sem foto';">`}</div>
+        <div class="imgBox">
+          ${foto ? `<img class="petImg" src="${foto}" alt="Foto do pet">` : "Sem foto"}
+        </div>
         <p class="name">${nome}</p>
         <p class="meta">${tipo} • ${raca}</p>
         <div class="pillRow">
@@ -207,6 +209,13 @@
         </div>
       `;
       grid.appendChild(card);
+      const img = card.querySelector(".petImg");
+      if (img) {
+        img.onerror = () => {
+          const box = img.closest(".imgBox");
+          if (box) box.textContent = "Sem foto";
+        };
+      }
     });
   }
 
