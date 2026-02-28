@@ -42,42 +42,6 @@
   </div>
 
   <script>
-
-    async function apiFetch(path, { method = "GET", body = null } = {}) {
-      const url = `${API_BASE}/${path}`.replace(/([^:]\/)\/+/g, "$1"); // evita // duplo
-    
-      const opt = {
-        method,
-        mode: "cors",
-        headers: {
-          "Content-Type": "application/json",
-          "ngrok-skip-browser-warning": "true",
-        },
-      };
-    
-      if (body) opt.body = JSON.stringify(body);
-    
-      const res = await fetch(url, opt);
-    
-      const ct = (res.headers.get("content-type") || "").toLowerCase();
-      const text = await res.text();
-    
-      // Debug rápido
-      console.log("API", method, url, "STATUS:", res.status, "CT:", ct);
-      console.log("BODY (primeiros 200):", text.slice(0, 200));
-    
-      // Se não for JSON, devolve erro explicando (geralmente é HTML do ngrok/404)
-      if (!ct.includes("application/json")) {
-        throw new Error("Resposta não é JSON (provável URL errada/404/ngrok/redirect).");
-      }
-    
-      const data = JSON.parse(text);
-    
-      if (!res.ok) {
-        throw new Error(data?.error || data?.message || `HTTP ${res.status}`);
-      }
-    
-      return data;
     
     /* =============================
        CONFIGURAÇÃO (AJUSTE AQUI)
