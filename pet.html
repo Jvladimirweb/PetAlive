@@ -301,13 +301,8 @@ Link: ${location.href}
     }
 
     try{
-      const r = await fetch(`${N8N_GET_PET_URL}?id=${encodeURIComponent(petIdParam)}`, {
-        method: "GET",
-        headers: {
-          "Accept": "application/json",
-          "ngrok-skip-browser-warning": "true"
-        }
-      });
+      // ✅ FETCH SEM HEADERS para evitar preflight (OPTIONS) e erro de CORS
+      const r = await fetch(`${N8N_GET_PET_URL}?id=${encodeURIComponent(petIdParam)}`);
 
       const text = await r.text();
       if(!r.ok) throw new Error(`HTTP ${r.status}: ${text.slice(0,200)}`);
