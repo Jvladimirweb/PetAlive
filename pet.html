@@ -291,8 +291,9 @@ Link: ${location.href}
   const params = new URLSearchParams(window.location.search);
   const petIdParam = (params.get("id") || "").trim();
 
-  // 👉 Troque para o seu endpoint do n8n que busca 1 pet
-  const N8N_GET_PET_URL = " https://95ce-2804-14d-5c77-8c5b-49b2-b02b-1ca5-ce42.ngrok-free.app/webhook/pet-get";
+  // ✅ Coloque aqui:
+  const SUPABASE_URL = "https://SEU_PROJETO.supabase.co";
+  const SUPABASE_ANON_KEY = "SUA_ANON_PUBLIC_KEY";
 
   async function carregarPet(){
     if(!petIdParam){
@@ -301,20 +302,25 @@ Link: ${location.href}
     }
 
     try{
-      // ✅ FETCH SEM HEADERS para evitar preflight (OPTIONS) e erro de CORS
-      const r = await fetch(`${N8N_GET_PET_URL}?id=${encodeURIComponent(petIdParam)}`);
+      const url =
+        `${SUPABASE_URL}/rest/v1/public_pets?` +
+        `pet_id=eq.${encodeURIComponent(petIdParam)}` +
+        `&select=pet_id,pet_nome,tipo,raca,foto_url,status,data_cadastro` +
+        `&limit=1`;
+
+      const r = await fetch(url, {
+        method: "GET",
+        headers: {
+          "apikey": SUPABASE_ANON_KEY,
+          "Authorization": `Bearer ${SUPABASE_ANON_KEY}`,
+          "Accept": "application/json"
+        }
+      });
 
       const text = await r.text();
       if(!r.ok) throw new Error(`HTTP ${r.status}: ${text.slice(0,200)}`);
 
-      const t = text.trim();
-      if(t.startsWith("<!DOCTYPE") || t.startsWith("<html")) {
-        throw new Error("Endpoint respondeu HTML (ngrok warning).");
-      }
-
       const data = JSON.parse(text);
-
-      // n8n pode devolver array ou objeto
       const pet = Array.isArray(data) ? data[0] : data;
 
       if (!pet || !normalize(pet.pet_id)) {
